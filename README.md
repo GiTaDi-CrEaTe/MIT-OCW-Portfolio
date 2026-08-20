@@ -2,7 +2,7 @@
 
 This repository contains my digitized coursework, problem sets, and applied engineering projects based on the MIT OpenCourseWare Computer Science and Artificial Intelligence curriculum (Advanced Undergraduate / Early Graduate level).
 
-My objective is to bridge rigorous academic theory with high-performance, real-world engineering, specifically applying advanced machine learning, neural networks, and optimized data pipelines to live execution environments.
+My objective is to bridge rigorous academic theory with, real-world engineering, specifically applying advanced machine learning, neural networks, and data pipelines to live environments.
 
 ## Curriculum Track
 * **[18.06: Linear Algebra](./18.06-Linear-Algebra)**
