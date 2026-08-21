@@ -1,0 +1,5 @@
+# Every script runs with the standard library plus NumPy alone.
+# No scikit-learn, no PyTorch, no TensorFlow, no SciPy -- every algorithm
+# in this repository (decompositions, eigensolvers, backpropagation, search)
+# is implemented from first principles, not called from a library.
+numpy>=1.24
