@@ -222,3 +222,90 @@ def pagerank_power_iteration(link_matrix: np.ndarray, damping: float = 0.85,
 # 5. Self-verification against numpy.linalg (used ONLY as a ground-truth oracle)
 # ---------------------------------------------------------------------------
 
+def _self_test():
+    rng = np.random.default_rng(1806)
+
+    print("=" * 70)
+    print("SELF-TEST 1: Gram-Schmidt QR reconstructs A and yields Q^T Q = I")
+    print("=" * 70)
+    A = rng.standard_normal((6, 4))
+    Q, R = qr_gram_schmidt(A)
+    reconstruction_error = np.max(np.abs(Q @ R - A))
+    orthonormality_error = np.max(np.abs(Q.T @ Q - np.eye(4)))
+    print(f"max |A - QR|        = {reconstruction_error:.2e}")
+    print(f"max |Q^T Q - I|     = {orthonormality_error:.2e}")
+    assert reconstruction_error < 1e-8 and orthonormality_error < 1e-8
+    print("PASSED\n")
+
+    print("=" * 70)
+    print("SELF-TEST 2: QR-algorithm eigenvalues match numpy.linalg.eigh")
+    print("=" * 70)
+    S = rng.standard_normal((5, 5))
+    S = S @ S.T  # force symmetric positive semi-definite
+    my_vals, my_vecs = eig_qr_algorithm(S)
+    ref_vals, ref_vecs = np.linalg.eigh(S)
+    my_sorted = np.sort(my_vals)
+    ref_sorted = np.sort(ref_vals)
+    eigval_error = np.max(np.abs(my_sorted - ref_sorted))
+    print(f"My eigenvalues (sorted):     {my_sorted}")
+    print(f"NumPy eigenvalues (sorted):  {ref_sorted}")
+    print(f"max |eigenvalue difference| = {eigval_error:.2e}")
+    assert eigval_error < 1e-6
+    print("PASSED\n")
+
+    print("=" * 70)
+    print("SELF-TEST 3: From-scratch SVD reconstructs A and matches singular values")
+    print("=" * 70)
+    A2 = rng.standard_normal((5, 3))
+    U, s, Vt = svd_from_scratch(A2)
+    reconstruction = U @ np.diag(s) @ Vt
+    recon_error = np.max(np.abs(reconstruction - A2))
+    ref_s = np.linalg.svd(A2, compute_uv=False)
+    s_error = np.max(np.abs(np.sort(s) - np.sort(ref_s)))
+    print(f"My singular values:    {s}")
+    print(f"NumPy singular values: {ref_s}")
+    print(f"max |A - U*Sigma*V^T| = {recon_error:.2e}")
+    print(f"max |singular value difference| = {s_error:.2e}")
+    assert recon_error < 1e-6 and s_error < 1e-6
+    print("PASSED\n")
+
+    print("=" * 70)
+    print("SELF-TEST 4: PageRank power iteration matches direct eigen-solve")
+    print("=" * 70)
+    # A small 5-page link graph, link_matrix[i, j] = 1 if page j links to page i
+    link_matrix = np.array([
+        [0, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0],
+        [1, 1, 0, 1, 1],
+        [0, 0, 0, 0, 1],
+        [0, 0, 1, 1, 0],
+    ], dtype=float)
+
+    pi_power = pagerank_power_iteration(link_matrix, damping=0.85, iterations=500)
+
+    # Ground truth: build the same Google matrix and solve directly for the
+    # eigenvector of eigenvalue 1 using numpy's general eigensolver.
+    n = link_matrix.shape[0]
+    col_sums = link_matrix.sum(axis=0)
+    col_sums[col_sums == 0] = 1
+    M = link_matrix / col_sums
+    google_matrix = 0.85 * M + 0.15 * np.ones((n, n)) / n
+    eigvals, eigvecs = np.linalg.eig(google_matrix)
+    idx = np.argmin(np.abs(eigvals - 1))
+    pi_direct = np.real(eigvecs[:, idx])
+    pi_direct = pi_direct / pi_direct.sum()
+
+    print(f"PageRank via power iteration: {pi_power}")
+    print(f"PageRank via direct eig-solve: {pi_direct}")
+    diff = np.max(np.abs(np.sort(pi_power) - np.sort(pi_direct)))
+    print(f"max sorted-vector difference: {diff:.2e}")
+    assert diff < 1e-4
+    print("PASSED\n")
+
+    print("All self-tests passed. Gram-Schmidt -> QR-algorithm eigensolver ->")
+    print("SVD -> PageRank chain is internally consistent and matches NumPy's")
+    print("reference LAPACK-backed routines.")
+
+
+if __name__ == "__main__":
+    _self_test()
