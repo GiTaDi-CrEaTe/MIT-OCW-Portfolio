@@ -125,3 +125,77 @@ def stationary_distribution_analytic(transition_matrix: np.ndarray) -> np.ndarra
 # Self-verification
 # ===========================================================================
 
+def _self_test():
+    print("=" * 70)
+    print("SELF-TEST 1: Bayesian posterior concentrates around the true theta")
+    print("as more coin-flip evidence accumulates")
+    print("=" * 70)
+    true_theta = 0.7
+    hypotheses = np.linspace(0.01, 0.99, 99)
+    prior = np.ones_like(hypotheses) / len(hypotheses)  # uniform prior: "no idea"
+
+    rng_np = np.random.default_rng(6041)
+    posterior = prior.copy()
+    sample_sizes_to_report = {10, 50, 200, 1000}
+    total_flips = 0
+    for batch_idx, batch_size in enumerate([10, 40, 150, 800]):
+        flips = rng_np.binomial(1, true_theta, size=batch_size)
+        successes = int(flips.sum())
+        posterior = bayesian_update(posterior, hypotheses, successes, batch_size)
+        total_flips += batch_size
+        if total_flips in sample_sizes_to_report:
+            mean_est = posterior_mean(hypotheses, posterior)
+            # "concentration" proxy: posterior probability mass within 0.05 of truth
+            mass_near_truth = posterior[np.abs(hypotheses - true_theta) < 0.05].sum()
+            print(f"After {total_flips:4d} flips: posterior mean = {mean_est:.4f}  "
+                  f"(true theta = {true_theta}),  "
+                  f"P(|theta - true| < 0.05) = {mass_near_truth:.4f}")
+
+    final_mean = posterior_mean(hypotheses, posterior)
+    assert abs(final_mean - true_theta) < 0.03, "Posterior mean should converge near the true theta."
+    print(f"PASSED: final posterior mean {final_mean:.4f} is within 0.03 of true theta {true_theta}.\n")
+
+    print("=" * 70)
+    print("SELF-TEST 2: MLE matches the Bayesian posterior mean under a")
+    print("uniform (uninformative) prior, as sample size grows")
+    print("(this is the Bernstein-von Mises phenomenon taught qualitatively")
+    print("in 6.041's discussion of the relationship between the two schools)")
+    print("=" * 70)
+    py_rng = random.Random(41)
+    coin_flips = [1 if py_rng.random() < true_theta else 0 for _ in range(2000)]
+    mle_estimate = mle_bernoulli(coin_flips)
+    print(f"MLE estimate from 2000 flips: {mle_estimate:.4f}")
+    print(f"Bayesian posterior mean from 1000 flips (above): {final_mean:.4f}")
+    assert abs(mle_estimate - true_theta) < 0.03
+    assert abs(mle_estimate - final_mean) < 0.05
+    print("PASSED: MLE and the Bayesian posterior mean agree closely at large n.\n")
+
+    print("=" * 70)
+    print("SELF-TEST 3: Long-run Markov chain simulation matches the")
+    print("analytically solved stationary distribution")
+    print("=" * 70)
+    # A simple 3-state weather chain: Sunny, Cloudy, Rainy
+    P = np.array([
+        [0.6, 0.3, 0.1],   # from Sunny
+        [0.2, 0.5, 0.3],   # from Cloudy
+        [0.1, 0.4, 0.5],   # from Rainy
+    ])
+    pi_analytic = stationary_distribution_analytic(P)
+    print(f"Analytic stationary distribution:  {pi_analytic}")
+    assert np.allclose(pi_analytic @ P, pi_analytic, atol=1e-8), "pi must be a fixed point of P."
+    assert abs(pi_analytic.sum() - 1.0) < 1e-8
+
+    sim_rng = random.Random(2024)
+    pi_simulated = simulate_markov_chain(P, start_state=0, n_steps=500_000, rng=sim_rng)
+    print(f"Simulated long-run frequencies:    {pi_simulated}")
+    diff = np.max(np.abs(pi_analytic - pi_simulated))
+    print(f"max |analytic - simulated| = {diff:.4f}")
+    assert diff < 0.01, "Simulation should match the analytic stationary distribution closely."
+    print("PASSED: 500,000-step simulation matches the exact linear-algebra solution.\n")
+
+    print("All self-tests passed. Bayesian updating, MLE, and Markov chain")
+    print("theory are each verified against an independent ground truth.")
+
+
+if __name__ == "__main__":
+    _self_test()
