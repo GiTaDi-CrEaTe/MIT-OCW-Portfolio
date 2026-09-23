@@ -70,3 +70,29 @@ def test_dijkstra_correctness():
 
 
 
+def test_dijkstra_rejects_negative_weights():
+    """Dijkstra should raise ValueError on negative edge weights."""
+    if hasattr(algo, "Graph"):
+        g = algo.Graph()
+        g.add_edge(0, 1, -5)
+        g.add_edge(1, 2, 3)
+        with pytest.raises(ValueError, match="non-negative"):
+            g.dijkstra(0)
+
+
+def test_avl_tree_no_duplicates():
+    """Inserting duplicate keys should not increase the tree."""
+    if hasattr(algo, "avl_insert"):
+        root = None
+        for k in [5, 3, 7, 5, 3, 7]:
+            root = algo.avl_insert(root, k)
+        out = []
+        algo.avl_inorder(root, out)
+        assert out == [3, 5, 7]
+    elif hasattr(algo, "AVLTree"):
+        tree = algo.AVLTree()
+        for k in [5, 3, 7, 5, 3, 7]:
+            tree.insert(k)
+        assert tree.inorder() == [3, 5, 7]
+
+
