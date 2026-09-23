@@ -45,3 +45,30 @@ def _update_height(node):
     node.height = 1 + max(_height(node.left), _height(node.right))
 
 
+def _rotate_right(y):
+    """
+    Standard AVL right rotation. Used when the left subtree is too tall.
+    Correctness: this is a local re-wiring that preserves the BST property
+    (in-order traversal is unchanged) while shifting height from the left
+    subtree to the right subtree.
+    """
+    x = y.left
+    T2 = x.right
+    x.right = y
+    y.left = T2
+    _update_height(y)
+    _update_height(x)
+    return x  # new subtree root
+
+
+def _rotate_left(x):
+    """Mirror image of _rotate_right."""
+    y = x.right
+    T2 = y.left
+    y.left = x
+    x.right = T2
+    _update_height(x)
+    _update_height(y)
+    return y
+
+
