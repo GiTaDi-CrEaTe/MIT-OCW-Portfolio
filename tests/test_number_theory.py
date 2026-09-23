@@ -31,3 +31,35 @@ def test_mod_pow_repeated_squaring():
         assert pow_fn(base, exp, mod) == pow(base, exp, mod)
 
 
+def test_mod_inverse_correctness():
+    pairs = [(3, 11), (7, 26), (65537, 3120), (17, 3120)]
+    for a, m in pairs:
+        inv = nt.mod_inverse(a, m)
+        assert (a * inv) % m == 1
+
+
+def test_miller_rabin_primality():
+    primes = [2, 3, 5, 7, 11, 13, 97, 101, 7919]
+    composites = [4, 6, 8, 9, 15, 21, 100, 561]  # 561 is a Carmichael number
+    for p in primes:
+        assert nt.is_probable_prime(p, rounds=20) is True
+    for c in composites:
+        assert nt.is_probable_prime(c, rounds=20) is False
+
+
+def test_rsa_keygen_and_roundtrip():
+    keygen_fn = getattr(nt, "generate_rsa_keypair", getattr(nt, "rsa_keygen", None))
+    pub, priv = keygen_fn(bits=256)
+    n, e = pub
+    _, d = priv
+
+    assert n > 0 and e > 0 and d > 0
+
+    message = 123456789
+    cipher = nt.rsa_encrypt(message, pub)
+    decrypted = nt.rsa_decrypt(cipher, priv)
+    assert decrypted == message
+    assert cipher != message
+
+
+
