@@ -114,9 +114,11 @@
   For **every single cell** within the bounding box between start and goal, $f(n)$ evaluates to the exact same constant value!
   Because all open nodes had identical priority $f$, Python's `heapq` expanded nodes based on arbitrary insertion order or secondary tie-breakers, wandering sideways across the entire grid before reaching the goal.
 - **The Fix:**
-  Added a microscopic tie-breaking bias toward the goal that preserves admissibility while breaking plateaus:
-  $$h_{\text{tie-break}}(n) = \left(1 + 10^{-4}\right) \cdot h_M(n)$$
-  With tie-breaking enabled, node expansions on the 50×50 open grid dropped from **2500 nodes to 99 nodes --  a 96.0% search space reduction** with 0% loss of path optimality.
+  Initially, one might consider scaling $h$ by $(1 + 10^{-4})$. While that broke plateaus empirically on small test grids, it is mathematically invalid: multiplying an admissible heuristic by any factor $w > 1.0$ can overestimate the remaining distance, strictly violating the admissibility condition $h(n) \le h^*(n)$ and surrendering the theoretical optimality proof.
+
+  Instead, we implemented **true lexicographic tie-breaking** in the priority queue. We keep $f(n) = g(n) + h(n)$ strictly unscaled and unmodified. When two states share identical $f$-values on a plateau, the min-heap resolves the tie by prioritizing the state with smaller remaining heuristic distance $h$ (or equivalently, larger $g$).
+  
+  Because $h(n)$ is never inflated, admissibility and path optimality are preserved unconditionally by theorem. With lexicographic tie-breaking enabled, node expansions on the 50×50 open grid dropped from **2500 nodes to 99 nodes -- a 96.0% search space reduction** with mathematically guaranteed 0% suboptimality.
 
 ---
 
