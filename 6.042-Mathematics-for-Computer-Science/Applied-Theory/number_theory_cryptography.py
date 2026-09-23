@@ -170,3 +170,27 @@ def generate_prime(bits: int) -> int:
 # 4. RSA key generation, encryption, decryption
 # ---------------------------------------------------------------------------
 
+def generate_rsa_keypair(bits: int = 256):
+    """
+    Generates an RSA keypair with n of roughly `bits` bits.
+    Returns (public_key, private_key) = ((n, e), (n, d)).
+    """
+    p = generate_prime(bits // 2)
+    q = generate_prime(bits // 2)
+    while p == q:
+        q = generate_prime(bits // 2)
+
+    n = p * q
+    phi = (p - 1) * (q - 1)
+
+    e = 65537  # standard choice: small, prime, and F4-shaped for fast encryption
+    if gcd(e, phi) != 1:
+        # Extremely unlikely with random primes, but handle it correctly anyway.
+        e = 3
+        while gcd(e, phi) != 1:
+            e += 2
+
+    d = mod_inverse(e, phi)
+    return (n, e), (n, d)
+
+
