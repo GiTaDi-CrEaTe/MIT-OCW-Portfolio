@@ -96,3 +96,22 @@ def test_avl_tree_no_duplicates():
         assert tree.inorder() == [3, 5, 7]
 
 
+def test_bfs_single_node():
+    """BFS from a node with no edges should return just that node."""
+    if hasattr(algo, "Graph"):
+        g = algo.Graph()
+        g.add_node(42)
+        order, distance = g.bfs(42)
+        assert order == [42]
+        assert distance == {42: 0}
+
+
+def test_dfs_visits_all_reachable():
+    """DFS should visit all reachable nodes."""
+    if hasattr(algo, "Graph"):
+        g = algo.Graph()
+        g.add_edge(0, 1)
+        g.add_edge(1, 2)
+        g.add_edge(2, 3)
+        order = g.dfs(0)
+        assert set(order) == {0, 1, 2, 3}
