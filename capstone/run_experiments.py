@@ -39,6 +39,7 @@ from capstone.cross_course_synthesis import (
     verify_discrete_vs_continuous_precision,
     synthesize_eigensolver_and_markov_chain,
     synthesize_loss_and_gradient_cancellation,
+    evaluate_computational_reliability_index,
 )
 
 
@@ -69,8 +70,8 @@ def plot_fig1_gram_schmidt(sweep: dict, artifacts_dir: Path):
 def plot_fig2_svd(svd_res: dict, artifacts_dir: Path):
     plt.figure(figsize=(8, 5))
     conds = svd_res["cond_numbers"]
-    plt.loglog(conds, svd_res["ata_sv_rel_error"], "r-^", label=r"SVD via $A^TA$ Eigendecomposition", linewidth=2, markersize=6)
-    plt.loglog(conds, svd_res["direct_sv_rel_error"], "g-o", label=r"Direct SVD (Bidiagonalization)", linewidth=2, markersize=6)
+    plt.loglog(conds, svd_res["ata_sv_rel_error"], "r-^", label=r"From-Scratch $A^TA$ SVD", linewidth=2, markersize=6)
+    plt.loglog(conds, svd_res["direct_sv_rel_error"], "g-o", label=r"LAPACK Direct SVD Baseline (dgesdd)", linewidth=2, markersize=6)
     plt.axvline(1e8, color="purple", linestyle="--", alpha=0.7, label=r"Critical Threshold $\kappa(A) \approx 10^8 \Rightarrow \kappa(A^TA) \approx 1/\epsilon_{mach}$")
     plt.xlabel(r"Condition Number $\kappa(A)$", fontsize=11)
     plt.ylabel(r"Smallest Singular Value Relative Error $|\hat{\sigma}_n - \sigma_n| / \sigma_n$", fontsize=11)
@@ -92,20 +93,20 @@ def plot_fig3_search(search_data: dict, artifacts_dir: Path):
     manhattan = [r["manhattan_nodes"] for r in records]
     tiebreak = [r["tiebreak_nodes"] for r in records]
 
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(8.5, 5))
     bar_width = 0.02
     d_arr = np.array(densities)
     plt.bar(d_arr - 1.5 * bar_width, dijkstra, width=bar_width, label="Dijkstra (h=0)", color="#7f7f7f")
     plt.bar(d_arr - 0.5 * bar_width, euclidean, width=bar_width, label="A* (Euclidean)", color="#1f77b4")
     plt.bar(d_arr + 0.5 * bar_width, manhattan, width=bar_width, label="A* (Manhattan)", color="#2ca02c")
-    plt.bar(d_arr + 1.5 * bar_width, tiebreak, width=bar_width, label="A* (Manhattan + Tie-Break)", color="#d62728")
+    plt.bar(d_arr + 1.5 * bar_width, tiebreak, width=bar_width, label="A* (Manhattan + Lexicographic Tie-Break)", color="#d62728")
 
     plt.xlabel("Obstacle Density", fontsize=11)
     plt.ylabel("Mean Nodes Expanded (50x50 Grid)", fontsize=11)
     plt.title("Figure 3: Search Space Reduction across Obstacle Fields", fontsize=12, fontweight="bold")
     plt.xticks(densities, [f"{d:.2f}" for d in densities])
     plt.grid(True, axis="y", ls=":", alpha=0.6)
-    plt.legend(fontsize=10)
+    plt.legend(fontsize=9)
     plt.tight_layout()
     out_path = artifacts_dir / "fig3_astar_search_efficiency.png"
     plt.savefig(out_path, dpi=300)
@@ -173,11 +174,52 @@ def plot_fig5_misspecification(artifacts_dir: Path):
     print(f"  [Artifact] Saved: {out_path}")
 
 
+def plot_fig6_computational_reliability(cri_data: dict, artifacts_dir: Path):
+    domains = list(cri_data.keys())
+    safe_vals = [cri_data[d]["safe_cri"] for d in domains]
+    fail_vals = [cri_data[d]["fail_cri"] for d in domains]
+
+    short_labels = [
+        "QR\nOrthogonality",
+        "SVD\nConditioning",
+        "Gradient\nVerification",
+        "Bayesian\nInference",
+        "A* Heuristic\nSearch",
+        "Algebraic\nExactness",
+    ]
+
+    plt.figure(figsize=(10, 5.5))
+    x = np.arange(len(domains))
+    width = 0.35
+
+    plt.bar(x - width/2, safe_vals, width, label="Controlled / Robust Formulation (Safe)", color="#2ca02c", edgecolor="black", alpha=0.85)
+    plt.bar(x + width/2, fail_vals, width, label="Naive / Uncalibrated Implementation (Failure)", color="#d62728", edgecolor="black", alpha=0.85)
+
+    plt.axhline(0.5, color="purple", linestyle="--", linewidth=1.5, label=r"Transition Threshold ($\rho = 0.5$)")
+    plt.ylabel(r"Computational Reliability Index $\rho \in [0, 1]$", fontsize=11)
+    plt.title("Figure 6: The Computational Reliability Index (CRI) Spectrum across Six Domains", fontsize=12, fontweight="bold")
+    plt.xticks(x, short_labels, fontsize=10)
+    plt.ylim(0.0, 1.15)
+    plt.grid(True, axis="y", ls=":", alpha=0.6)
+    plt.legend(loc="upper right", fontsize=9)
+    plt.tight_layout()
+    out_path = artifacts_dir / "fig6_computational_reliability.png"
+    plt.savefig(out_path, dpi=300)
+    plt.close()
+    print(f"  [Artifact] Saved: {out_path}")
+
+
 def main():
-    print("=" * 76)
+    print("=" * 80)
     print("      FOUNDATIONS LAB: WHEN GUARANTEES MEET REAL MACHINES")
     print("               Complete Experimental Verification Suite")
-    print("=" * 76)
+    print("=" * 80)
+    print("METADATA & ENVIRONMENT:")
+    print(f"  Python Version:     {sys.version.split()[0]}")
+    print(f"  NumPy Version:      {np.__version__}")
+    print(f"  Machine Epsilon:    {np.finfo(np.float64).eps:.2e}")
+    print("  RNG Master Seeds:   1806, 6042, 6006, 6041, 6036, 6034")
+    print("=" * 80)
 
     artifacts_dir = ensure_artifacts_dir()
 
@@ -186,7 +228,7 @@ def main():
     h_res = run_hilbert_experiment()
     plot_fig1_gram_schmidt(sweep1, artifacts_dir)
 
-    print("\n>>> Running Experiment 2: SVD via Normal Equations vs Direct Methods...")
+    print("\n>>> Running Experiment 2: From-Scratch SVD vs LAPACK Baseline...")
     svd_res = run_svd_condition_experiment()
     plot_fig2_svd(svd_res, artifacts_dir)
 
@@ -201,17 +243,18 @@ def main():
     print("\n>>> Running Experiment 5: Model Misspecification & Bayesian Updating...")
     plot_fig5_misspecification(artifacts_dir)
 
-    print("\n>>> Running Experiment 6: Cross-Course Synthesis...")
+    print("\n>>> Running Experiment 6: Cross-Course Synthesis & Reliability Framework...")
     disc_res = verify_discrete_vs_continuous_precision()
     markov_res = synthesize_eigensolver_and_markov_chain()
     grad_cancel = synthesize_loss_and_gradient_cancellation()
+    cri_data = evaluate_computational_reliability_index()
+    plot_fig6_computational_reliability(cri_data, artifacts_dir)
 
-    print("\n" + "=" * 76)
+    print("\n" + "=" * 80)
     print("                     ALL EXPERIMENTS COMPLETED")
     print(f"  Visual artifacts generated in: {artifacts_dir}")
-    print("=" * 76)
+    print("=" * 80)
 
 
 if __name__ == "__main__":
     main()
-
