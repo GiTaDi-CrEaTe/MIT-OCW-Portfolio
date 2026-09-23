@@ -32,3 +32,28 @@ def test_astar_admissibility_and_optimality():
             assert a_exp <= d_exp
 
 
+def test_minimax_and_alphabeta_equivalence():
+    if hasattr(search, "build_random_game_tree"):
+        rng = random.Random(34)
+        tree = search.build_random_game_tree(depth=4, branching=2, rng=rng)
+        c_plain = [0]
+        plain_val = search.minimax(tree, True, c_plain)
+        c_ab = [0]
+        ab_val = search.minimax_alpha_beta(tree, True, -math.inf, math.inf, c_ab)
+        assert plain_val == ab_val
+        assert c_ab[0] <= c_plain[0]
+    elif hasattr(search, "GameNode"):
+        def build_tree(values, depth, max_depth):
+            if depth == max_depth:
+                return search.GameNode(value=values.pop(0))
+            children = [build_tree(values, depth + 1, max_depth) for _ in range(2)]
+            return search.GameNode(children=children)
+        leaf_vals = [3, 5, 6, 9, 1, 2, 0, 7]
+        tree = build_tree(leaf_vals, 0, 3)
+        mm_v, mm_n = search.minimax(tree, True)
+        ab_v, ab_n = search.alpha_beta(tree, True)
+        assert mm_v == ab_v
+        assert ab_n <= mm_n
+
+
+
