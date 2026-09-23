@@ -206,3 +206,18 @@ def rsa_decrypt(cipher_int: int, private_key) -> int:
     return mod_pow(cipher_int, d, n)
 
 
+def encode_text(text: str) -> int:
+    """Encodes a UTF-8 string as one big integer (simple positional encoding)."""
+    return int.from_bytes(text.encode("utf-8"), byteorder="big")
+
+
+def decode_text(number: int) -> str:
+    length = (number.bit_length() + 7) // 8
+    return number.to_bytes(length, byteorder="big").decode("utf-8")
+
+
+# ---------------------------------------------------------------------------
+# 5. Self-verification: round-trip correctness + spot-check Miller-Rabin
+#    against trial division on small numbers.
+# ---------------------------------------------------------------------------
+
