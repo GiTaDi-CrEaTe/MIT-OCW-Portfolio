@@ -46,3 +46,16 @@ def test_markov_chain_stationary_distribution():
 
 
 
+def test_mle_bernoulli_extreme_cases():
+    """MLE should handle all-success and all-failure data correctly."""
+    assert np.isclose(prob.mle_bernoulli([1, 1, 1, 1]), 1.0)
+    assert np.isclose(prob.mle_bernoulli([0, 0, 0, 0]), 0.0)
+
+
+def test_stationary_distribution_sums_to_one():
+    """Stationary distribution must sum to exactly 1."""
+    if hasattr(prob, "stationary_distribution_analytic"):
+        P = np.array([[0.5, 0.5], [0.3, 0.7]])
+        pi = prob.stationary_distribution_analytic(P)
+        assert np.isclose(np.sum(pi), 1.0, atol=1e-10)
+        assert np.all(pi >= 0)
