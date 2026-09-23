@@ -91,3 +91,22 @@ def test_qr_gram_schmidt_raises_on_dependent_columns():
         la.qr_gram_schmidt(A)
 
 
+def test_svd_single_column_matrix():
+    """SVD on a single-column matrix should produce a 1-element singular value."""
+    A = np.array([[3.0], [4.0]])
+    svd_fn = getattr(la, "svd_from_scratch", getattr(la, "svd", None))
+    U, s, Vt = svd_fn(A)
+    assert np.isclose(s[0], 5.0, atol=1e-4)
+
+
+def test_pagerank_dangling_nodes():
+    """PageRank should handle dangling nodes gracefully."""
+    link_matrix = np.array([
+        [0, 1, 0],
+        [1, 0, 0],
+        [0, 0, 0],
+    ], dtype=float)
+    pi = la.pagerank_power_iteration(link_matrix, damping=0.85, iterations=300)
+    assert len(pi) == 3
+    assert np.isclose(np.sum(pi), 1.0, atol=1e-6)
+    assert np.all(pi > 0)
