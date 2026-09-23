@@ -43,3 +43,17 @@ def test_neural_network_learns_nonlinear_data():
 
 
 
+def test_neural_network_zero_init_symmetry_failure():
+    """Zero-initialized network should fail to break symmetry and get stuck near 50% accuracy."""
+    if not hasattr(ml, "make_two_rings"):
+        pytest.skip("make_two_rings not available")
+    X, y = ml.make_two_rings(n_per_class=100, seed=36)
+    net = ml.NeuralNetwork(layer_sizes=[2, 8, 8, 1], hidden_activation="tanh", seed=0)
+    for l in range(net.L):
+        net.W[l][:] = 0.0
+        net.b[l][:] = 0.0
+    for _ in range(500):
+        net.train_step(X, y, learning_rate=0.3)
+    preds = net.predict(X)
+    accuracy = float(np.mean(preds == y))
+    assert accuracy < 0.65, f"Zero-init should not solve non-linear task, got {accuracy:.2f}"
