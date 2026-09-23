@@ -31,3 +31,36 @@ import random
 # PART 1  --  A* search vs. Dijkstra on a grid with obstacles (Pset 2-3)
 # ===========================================================================
 
+def build_grid_graph(width, height, obstacles):
+    """Grid graph: nodes are (x, y) cells not in `obstacles`; 4-connected,
+    unit edge cost."""
+    nodes = set()
+    for x in range(width):
+        for y in range(height):
+            if (x, y) not in obstacles:
+                nodes.add((x, y))
+
+    def neighbors(cell):
+        x, y = cell
+        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            nxt = (x + dx, y + dy)
+            if nxt in nodes:
+                yield nxt
+
+    return nodes, neighbors
+
+
+def euclidean_heuristic(a, b):
+    """
+    h(n) = straight-line distance from n to the goal.
+    Admissibility claim: on a 4-connected unit-cost grid, the true remaining
+    cost from any cell to the goal is at least the Euclidean distance between
+    them (a straight line is the shortest possible path in the continuous
+    relaxation of the problem; the grid can only make the actual path longer
+    by forcing detours around obstacles or axis-aligned moves). So
+    h(n) <= true_cost(n, goal) always -- h never overestimates, which is
+    exactly the admissibility condition A*'s optimality proof requires.
+    """
+    return math.dist(a, b)
+
+
