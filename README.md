@@ -26,12 +26,12 @@ The capstone experiments (documented in [`capstone/`](./capstone/README.md), fig
 
 | Question | What the textbook says | What actually happens | Figure |
 |---|---|---|---|
-| **Is from-scratch linear algebra stable?** | Gram-Schmidt produces $Q^TQ = I$ | Classical GS loses orthogonality ($\|Q^TQ - I\|_2 > 1.0$) at $\kappa(A) \ge 10^9$; Modified GS holds up | [Fig 1](./artifacts/fig1_gram_schmidt_orthogonality.png) |
-| | SVD via $A^TA$: $\sigma_i = \sqrt{\lambda_i(A^TA)}$ | Squaring the condition number zeroes out small singular values when $\kappa(A) \ge 10^8$ | [Fig 2](./artifacts/fig2_svd_condition_squaring.png) |
-| **Can a heuristic cut search without breaking optimality?** | Admissible $h(n) \le h^*(n)$ guarantees shortest paths | Overestimating by 1.5x cuts nodes by 90% but fails 63.7% of the time; tie-breaking cuts 96% with 0% failure | [Fig 3](./artifacts/fig3_astar_search_efficiency.png) |
+| **Is from-scratch linear algebra stable?** | Gram-Schmidt produces $Q^TQ = I$ | Classical GS loses orthogonality ($\|Q^TQ - I\|_2 > 0.42$) at $\kappa(A) \ge 10^8$; Modified GS holds up ($10^{-9}$) | [Fig 1](./artifacts/fig1_gram_schmidt_orthogonality.png) |
+| | From-scratch SVD via $A^TA$ vs LAPACK baseline | Squaring the condition number zeroes out small singular values when $\kappa(A) \ge 10^8$ (354% error at $10^9$) | [Fig 2](./artifacts/fig2_svd_condition_squaring.png) |
+| **Can a heuristic cut search without breaking optimality?** | Admissible $h(n) \le h^*(n)$ guarantees shortest paths | Overestimating by 1.5x cuts nodes but fails 63.7% of the time; lexicographic tie-breaking cuts 96% with 0% failure | [Fig 3](./artifacts/fig3_astar_search_efficiency.png) |
 | **How precise is gradient computation?** | $\lim_{\epsilon \to 0} \frac{\Delta f}{2\epsilon} = \nabla f$ | U-curve: too-small $\epsilon$ causes catastrophic cancellation, optimal only near $10^{-5}$ | [Fig 4](./artifacts/fig4_gradient_finite_difference_u_curve.png) |
 | **What happens to Bayesian updating when the model is wrong?** | Posterior concentrates on the true parameter | A static model tracking a switching coin reports 95% certainty while being wrong 95.8% of the time | [Fig 5](./artifacts/fig5_model_misspecification.png) |
-| **Do the six subjects connect?** | Each course stands alone | Integer rings ($\mathbb{Z}/n\mathbb{Z}$) have zero error; float64 can't even do $(10^{16}+1)-10^{16}-1$ correctly | [Synthesis](./capstone/cross_course_synthesis.py) |
+| **Can a unified metric predict computational breakdown?** | Each course stands alone | The Computational Reliability Index (CRI) $\rho \in [0, 1]$ unifies error margins across all six domains | [Fig 6](./artifacts/fig6_computational_reliability.png) |
 
 ---
 
@@ -117,6 +117,7 @@ MIT-OCW-Portfolio/
 |-- _study_notes/        # Problem set roadmaps and personal study notes
 |-- lab_notebook/        # Log of hardest failures and how I fixed them
 | +-- failures_and_fixes.md
+|-- RESEARCH_REPORT.md       # Concise 1-page executive research summary
 |-- LIMITATIONS.md       # Honest accounting of what this code can't do
 |-- requirements.txt
 +-- .github/workflows/ci.yml    # CI across Python 3.11, 3.12, 3.13
@@ -180,7 +181,7 @@ Some things I ran into that I still don't have clean answers for:
 
 - **Why does MGS work better than CGS when they're mathematically identical?** I can explain the mechanism (sequential vs. original projections, catastrophic cancellation), but I don't have a tight error bound of the form $\|Q^TQ - I\| \le f(\kappa, \epsilon_{\text{mach}})$ for MGS that I've derived myself. The literature says $O(\kappa \cdot \epsilon_{\text{mach}})$ for MGS vs. $O(\kappa^2 \cdot \epsilon_{\text{mach}})$ for CGS, but I haven't worked through the proof.
 - **Is there a principled way to pick the discount factor $\gamma$ in the adaptive Bayesian model?** I tuned it by hand. There should be a way to learn the switching rate from the data itself (maybe a hidden Markov model), but that's a much harder inference problem.
-- **The tie-breaking trick for A* on open grids feels like a hack.** It works, and it preserves admissibility, but I wonder if there's a deeper geometric reason why $f$-cost plateaus form on uniform grids, and whether there's a systematic way to break them that generalizes beyond Manhattan distance.
+- **Why do f-cost plateaus form on uniform grids, and how does lexicographic tie-breaking resolve them?** On an empty grid, $f(n) = g(n) + h(n) = (x+y) + (W-1-x + H-1-y) = W + H - 2$ is strictly constant across the entire rectangular bounding box. Pure A* wanders arbitrarily across this flat manifold. True lexicographic tie-breaking resolves equal-$f$ states by minimizing remaining $h$ without inflating the heuristic, preserving admissibility while driving expansions along the diagonal.
 
 ---
 

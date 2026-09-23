@@ -1,83 +1,66 @@
-# When Guarantees Meet the Machine
-*A Flagship Investigation into the Breakdown of Mathematical Guarantees on Physical Hardware*
+# Foundations Lab  --  Capstone Experiments
+*When Mathematical Guarantees Meet Real Computers*
 
 ---
 
-## The Central Question
+## Overview
 
-In pure mathematics, algorithms are accompanied by unconditional theorems:
-- **Gram-Schmidt** constructs an orthonormal basis spanning any set of linearly independent vectors.
-- **The SVD theorem** guarantees that any real matrix $A \in \mathbb{R}^{m \times n}$ decomposes as $U \Sigma V^T$.
-- **A\* search** with an admissible heuristic is provably optimal.
-- **The chain rule** computes exact analytical gradients.
-- **Bayes' theorem** updates beliefs rationally under accumulated evidence.
+This directory contains the empirical foundation of the portfolio: six controlled, reproducible experiments that test where pure mathematical theory diverges from computer implementation.
 
-Yet modern computing does not occur in exact arithmetic. It occurs on finite-precision floating-point hardware (IEEE 754 float64 with machine epsilon $\epsilon_{\text{mach}} \approx 2.22 \times 10^{-16}$), discrete clock cycles, and bounded memory.
+All six experiments can be executed and their visual artifacts regenerated with a single command:
+```bash
+python3 capstone/run_experiments.py
+```
 
-This capstone investigates the friction between mathematical proofs and real computers:
-
-$$\text{Pure Mathematical Guarantee} \quad \xrightarrow{\quad\text{IEEE 754 Float64 \& Finite Sampling}\quad} \quad \text{Empirical Computational Reality}$$
+All generated publication-quality figures are saved directly to [`../artifacts/`](../artifacts/).
 
 ---
 
-## Summary of Empirical Investigations
-
-| Investigation | Mathematical Guarantee | Empirical Failure Mode | Root Mechanism | Artifact |
-|---|---|---|---|---|
-| **1. Gram-Schmidt QR** | Columns of $Q$ are mutually orthogonal ($Q^T Q = I$) | Orthogonality error $\|Q^T Q - I\|_2 > 1.0$ at $\kappa(A) \ge 10^9$ | Classical GS uses corrupted intermediate coordinates; MGS mitigates by sequential updates | [Fig 1](../artifacts/fig1_gram_schmidt_orthogonality.png) |
-| **2. SVD via $A^TA$** | Singular values $\sigma_i = \sqrt{\lambda_i(A^TA)}$ | Small singular values obliterated ($\text{rel error} = 100\%$) at $\kappa(A) \ge 10^8$ | Forming $A^TA$ squares the condition number $\kappa(A^TA) = \kappa(A)^2 \ge 1/\epsilon_{\text{mach}}$ | [Fig 2](../artifacts/fig2_svd_condition_squaring.png) |
-| **3. A\* Heuristic Search** | Admissible $h(n) \le h^*(n)$ guarantees optimal path | Overestimating $h$ reduces node expansion by 90% but fails optimality in 63.7% of runs | Inadmissible estimates violate the branch-and-bound invariant | [Fig 3](../artifacts/fig3_astar_search_efficiency.png) |
-| **4. Gradient Precision** | $\lim_{\epsilon \to 0} \frac{f(\theta+\epsilon) - f(\theta-\epsilon)}{2\epsilon} = \nabla f$ | Error blows up to 100% when $\epsilon \le 10^{-14}$; optimal only near $10^{-5}$ | U-curve: truncation error $O(\epsilon^2)$ vs catastrophic cancellation $O(\epsilon_{\text{mach}}/\epsilon)$ | [Fig 4](../artifacts/fig4_gradient_finite_difference_u_curve.png) |
-| **5. Model Misspecification** | Bayesian posterior concentrates on true state parameter | 95% Credible Interval covers true state only 4.2% of the time | Static i.i.d. assumption produces false certainty on non-stationary Markov data | [Fig 5](../artifacts/fig5_model_misspecification.png) |
-| **6. Cross-Course Synthesis** | Six isolated subjects form a pipeline | Discrete exactness (6.042) vs continuous numerical drift (18.06/6.036) | Integer rings $\mathbb{Z}/n\mathbb{Z}$ have no roundoff; float64 $(10^{16}+1)-10^{16} = 0$ | Code |
-
----
-
-## Detailed Experimental Findings
+## The Six Investigations
 
 ### Experiment 1 --  Numerical Stability: Classical vs. Modified Gram-Schmidt
 - **Code:** [`numerical_stability.py`](./numerical_stability.py)
 - **Artifact:** [`fig1_gram_schmidt_orthogonality.png`](../artifacts/fig1_gram_schmidt_orthogonality.png)
 
 #### The Experiment
-We generated matrices $A \in \mathbb{R}^{30 \times 15}$ with condition numbers systematically swept from $\kappa(A) = 10^1$ to $10^{14}$ using SVD-controlled spectra. We also evaluated a 10×10 Hilbert matrix ($H_{i,j} = \frac{1}{i+j-1}$, $\kappa(H) \approx 1.6 \times 10^{13}$).
+We generated $30 \times 15$ matrices with condition numbers $\kappa(A)$ controlled across 14 orders of magnitude ($10^1$ to $10^{14}$) using exact singular value synthesis ($A = U \Sigma V^T$). We also benchmarked a $10 \times 10$ Hilbert matrix ($\kappa \approx 1.60 \times 10^{13}$).
 
 #### Quantitative Results
-| Condition $\kappa(A)$ | CGS Orthogonality Loss $\|Q^TQ - I\|_2$ | MGS Orthogonality Loss $\|Q^TQ - I\|_2$ | Ratio CGS / MGS |
+| Condition $\kappa(A)$ | CGS Orthogonality Loss $\|Q^T Q - I\|_2$ | MGS Orthogonality Loss $\|Q^T Q - I\|_2$ | Error Ratio CGS / MGS |
 |---|---|---|---|
-| $10^1$ | $2.01 \times 10^{-15}$ | $1.42 \times 10^{-15}$ | 1.4 |
-| $10^4$ | $6.00 \times 10^{-10}$ | $5.44 \times 10^{-13}$ | $1.1 \times 10^3$ |
-| $10^6$ | $3.10 \times 10^{-6}$ | $8.77 \times 10^{-11}$ | $3.5 \times 10^4$ |
-| $10^8$ | $4.17 \times 10^{-1}$ | $5.22 \times 10^{-9}$ | $8.0 \times 10^7$ |
-| $10^{10}$ | $2.78 \times 10^{0}$ | $8.33 \times 10^{-7}$ | $3.3 \times 10^6$ |
-| $10^{14}$ | $5.49 \times 10^{0}$ | $1.63 \times 10^{-3}$ | $3.4 \times 10^3$ |
-| **Hilbert Matrix (n=10)** | **3.00** | **$1.80 \times 10^{-4}$** | **$1.6 \times 10^4$** |
+| $10^1$ | $1.72 \times 10^{-15}$ | $1.41 \times 10^{-15}$ | $1.22 \times$ |
+| $10^4$ | $3.89 \times 10^{-12}$ | $4.10 \times 10^{-13}$ | $9.49 \times$ |
+| $10^6$ | $4.21 \times 10^{-8}$ | $2.14 \times 10^{-11}$ | $1,967 \times$ |
+| **$10^8$** | **0.4217** (Complete Breakdown) | **$1.85 \times 10^{-9}$** | **$2.28 \times 10^8 \times$** |
+| $10^{10}$ | **1.0000** (Totally Degenerate) | $1.76 \times 10^{-7}$ | $5.68 \times 10^6 \times$ |
+| $10^{14}$ | **1.0000** | $1.82 \times 10^{-3}$ | $5.49 \times 10^2 \times$ |
+| **Hilbert ($n=10$)** | **3.0125** | **$1.38 \times 10^{-3}$** | **$2,182 \times$** |
 
 #### Key Insight
-In pure mathematics, CGS and MGS compute identical projections. In double precision, CGS computes projection coefficients using the original, un-orthogonalized column, triggering catastrophic cancellation when columns are nearly collinear. By $\kappa(A) = 10^8$, CGS has completely lost orthogonality ($\|Q^TQ - I\| \approx 0.42$), while the reconstruction residual $\|A - QR\|$ remains small ($\sim 10^{-17}$). This reveals a crucial lesson: **a near-zero residual does NOT imply an orthogonal basis.**
+In exact arithmetic, CGS and MGS are mathematically identical. On floating-point hardware (IEEE 754 float64, $\epsilon_{\text{mach}} \approx 2.22 \times 10^{-16}$), CGS suffers from catastrophic cancellation error scaling as $O(\epsilon_{\text{mach}} \kappa(A)^2)$, completely losing orthogonality around $\kappa(A) \approx 10^8$. MGS projects sequentially onto updated coordinates, degrading as $O(\epsilon_{\text{mach}} \kappa(A))$ -- maintaining usable basis vectors even on notoriously ill-conditioned Hilbert matrices.
 
 ---
 
-### Experiment 2 --  SVD via $A^TA$ vs. Direct Bidiagonalization
+### Experiment 2 --  From-Scratch SVD via $A^TA$ vs. LAPACK Baseline
 - **Code:** [`svd_investigation.py`](./svd_investigation.py)
 - **Artifact:** [`fig2_svd_condition_squaring.png`](../artifacts/fig2_svd_condition_squaring.png)
 
 #### The Experiment
-The textbook SVD builds the symmetric matrix $A^TA$, computes its eigenvalues $\lambda_i$, and derives $\sigma_i = \sqrt{\lambda_i}$. We compared this from-scratch construction against direct bidiagonalization SVD across $\kappa(A) \in [10^1, 10^{12}]$.
+The textbook SVD builds the symmetric normal matrix $A^TA$, computes its eigenvalues $\lambda_i$, and derives singular values as $\sigma_i = \sqrt{\lambda_i}$. We compared this from-scratch textbook construction against the production direct LAPACK SVD baseline (`dgesdd`, using Golub-Kahan bidiagonalization and divide-and-conquer) across $\kappa(A) \in [10^1, 10^{12}]$.
 
 #### Quantitative Results
-| $\kappa(A)$ | True $\sigma_{\text{min}}$ | $A^TA$ Estimated $\hat{\sigma}_{\text{min}}$ | $A^TA$ Relative Error | Direct SVD Relative Error |
+| $\kappa(A)$ | True $\sigma_{\text{min}}$ | $A^TA$ Estimated $\hat{\sigma}_{\text{min}}$ | $A^TA$ Relative Error | LAPACK Baseline Relative Error |
 |---|---|---|---|---|
 | $10^2$ | $1.00 \times 10^{-2}$ | $1.00 \times 10^{-2}$ | $2.37 \times 10^{-13}$ | $1.21 \times 10^{-15}$ |
 | $10^6$ | $1.00 \times 10^{-6}$ | $1.00 \times 10^{-6}$ | $9.40 \times 10^{-6}$ | $2.05 \times 10^{-11}$ |
 | $10^7$ | $1.00 \times 10^{-7}$ | $9.97 \times 10^{-8}$ | $2.52 \times 10^{-3}$ | $1.21 \times 10^{-10}$ |
 | $10^8$ | $1.00 \times 10^{-8}$ | $1.27 \times 10^{-8}$ | **27.0%** | $2.30 \times 10^{-9}$ |
-| $10^9$ | $1.00 \times 10^{-9}$ | **0.00000** | **100.0% (Zeroed)** | $2.44 \times 10^{-8}$ |
+| $10^9$ | $1.00 \times 10^{-9}$ | $4.55 \times 10^{-9}$ | **354.5% (Swamped)** | $2.44 \times 10^{-8}$ |
 | $10^{12}$ | $1.00 \times 10^{-12}$ | **0.00000** | **100.0% (Zeroed)** | $1.77 \times 10^{-5}$ |
 
 #### Key Insight
 $$\kappa(A^TA) = \left(\frac{\sigma_1}{\sigma_n}\right)^2 = \kappa(A)^2$$
-When $\kappa(A) \ge 10^8$, $\kappa(A^TA) \ge 10^{16} \approx 1/\epsilon_{\text{mach}}$. At that point, the smallest eigenvalues of $A^TA$ fall below the floating-point roundoff floor and are rounded to zero. Computing $u_i = \frac{1}{\sigma_i} A v_i$ then involves dividing by zero or by pure noise. Direct bidiagonalization avoids forming $A^TA$ entirely, preserving accuracy down to $\epsilon_{\text{mach}}$.
+When $\kappa(A) \ge 10^8$, $\kappa(A^TA) \ge 10^{16} \approx 1/\epsilon_{\text{mach}}$. At that point, the smallest singular values square to numbers below the floating-point roundoff floor and are swamped or zeroed. Computing $u_i = \frac{1}{\sigma_i} A v_i$ then involves dividing by pure noise. Direct bidiagonalization avoids forming $A^TA$ entirely, preserving accuracy down to $\epsilon_{\text{mach}}$.
 
 ---
 
@@ -86,10 +69,10 @@ When $\kappa(A) \ge 10^8$, $\kappa(A^TA) \ge 10^{16} \approx 1/\epsilon_{\text{m
 - **Artifact:** [`fig3_astar_search_efficiency.png`](../artifacts/fig3_astar_search_efficiency.png)
 
 #### The Experiment
-We benchmarked Dijkstra, Euclidean A\*, Manhattan A\*, Manhattan with Tie-Breaking, and an Inadmissible Heuristic ($1.5 \times h_M$) on random obstacle grids from size 30×30 to 50×50 across obstacle densities $0.0 \le \rho \le 0.25$ over 80 independent runs.
+We benchmarked Dijkstra, Euclidean A\*, Manhattan A\*, Manhattan with Lexicographic Tie-Breaking, and an Inadmissible Heuristic ($1.5 \times h_M$) on random obstacle grids from size 30×30 to 50×50 across obstacle densities $0.0 \le \rho \le 0.25$ over 80 independent runs.
 
 #### Quantitative Results (50×50 Grid)
-| Density $\rho$ | Dijkstra Nodes | A\* Euclidean | A\* Manhattan | A\* Tie-Break | Inadmissible (1.5x) | Tie-Break Savings |
+| Density $\rho$ | Dijkstra Nodes | A\* Euclidean | A\* Manhattan | A\* Lexicographic Tie-Break | Inadmissible (1.5x) | Tie-Break Savings |
 |---|---|---|---|---|---|---|
 | 0.00 (Open) | 2500.0 | 2500.0 | 2500.0 | **99.0** | 99.0 | **96.0%** |
 | 0.10 | 2234.3 | 2178.3 | 1920.3 | **248.5** | 129.3 | **88.9%** |
@@ -99,11 +82,11 @@ We benchmarked Dijkstra, Euclidean A\*, Manhattan A\*, Manhattan with Tie-Breaki
 #### Optimality Verification
 - **A\* (Euclidean):** 0 / 80 suboptimal paths (**0.0% failure**)
 - **A\* (Manhattan):** 0 / 80 suboptimal paths (**0.0% failure**)
-- **A\* (Tie-Break):** 0 / 80 suboptimal paths (**0.0% failure**)
+- **A\* (Lexicographic Tie-Break):** 0 / 80 suboptimal paths (**0.0% failure, strictly guaranteed**)
 - **A\* (Inadmissible 1.5x):** **51 / 80 suboptimal paths (63.7% failure rate)**
 
 #### Key Insight
-Admissibility is not a minor guideline; it is a razor-thin boundary. Scaling the heuristic by just 1.5× cuts search nodes in half, but produces suboptimal paths on nearly two-thirds of all runs. Furthermore, on open grids without tie-breaking, standard A\* expands all 2500 nodes because $f(n) = g(n) + h(n)$ is constant along diagonal wavefronts. A $10^{-4}$ tie-breaking bias breaks plateaus and achieves a **96% node reduction** while preserving 100% path optimality.
+Admissibility is not a minor guideline; it is a razor-thin boundary. Scaling the heuristic by just 1.5× cuts search nodes in half, but produces suboptimal paths on nearly two-thirds of all runs (63.7% failure rate). Furthermore, on open grids without tie-breaking, standard A\* expands all 2500 nodes because $f(n) = g(n) + h(n)$ is constant along diagonal wavefronts. Rather than scaling $h$ by an ad-hoc factor $(1 + \epsilon)$ which can exceed $h^*(n)$ and violate admissibility, true lexicographic tie-breaking keeps $f = g + h$ strictly unscaled and resolves equal-$f$ ties by preferring states with smaller remaining $h$. This preserves the mathematical admissibility theorem $h(n) \le h^*(n)$ unconditionally while achieving a **96% node reduction** on open grids.
 
 ---
 
@@ -151,25 +134,42 @@ We fed a stream of coin flips generated by a 2-state Markov regime-switching coi
   - Final Posterior Standard Deviation: $9.49 \times 10^{-2}$
 
 #### Key Insight
-The static model's posterior variance shrinks as $O(1/N)$. Because it assumes the world is static, it accumulates **false certainty**: it converges with tight bounds around the blended long-run average ($\sim 0.525$), completely blind to the fact that the coin is currently in the 0.85 state! This connects probability theory directly to the dangers of overconfident machine learning deployment.
+The static model's posterior variance shrinks as $O(1/N)$. Because it assumes the world is static, it accumulates **false certainty**: it converges with tight bounds around the blended long-run average ($\sim 0.525$), completely blind to the fact that the coin is currently in the 0.85 state. This connects probability theory directly to the dangers of overconfident machine learning deployment.
 
 ---
 
-### Experiment 6 --  Cross-Course Synthesis: Connecting the Six Disciplines
+### Experiment 6 --  Cross-Course Synthesis & The Computational Reliability Index (CRI)
 - **Code:** [`cross_course_synthesis.py`](./cross_course_synthesis.py)
+- **Artifact:** [`fig6_computational_reliability.png`](../artifacts/fig6_computational_reliability.png)
 
+#### 1. Theoretical Connections
 1. **6.042 (Discrete Exactness) $\to$ 18.06 (Continuous Breakdown):**
- In 6.042 integer arithmetic ($\mathbb{Z}/n\mathbb{Z}$), Euler's theorem $(m^e)^d \equiv m \pmod n$ holds with exactness for 512-bit numbers with zero roundoff. In float64 arithmetic, $(10^{16} + 1.0) - 10^{16} - 1.0 = -1.0$ (complete loss of the additive unit).
+   In 6.042 integer arithmetic ($\mathbb{Z}/n\mathbb{Z}$), Euler's totient theorem $(m^e)^d \equiv m \pmod n$ was verified using genuine primes $p = 1000000007$ and $q = 1000000009$ with private exponent $d = e^{-1} \pmod{\phi(n)}$, recovering $m$ with exact 0.0 reconstruction error. In float64 arithmetic, $(10^{16} + 1.0) - 10^{16} - 1.0 = 1.0$ (complete catastrophic cancellation of the unit).
 2. **18.06 (Eigenstructure) $\leftrightarrow$ 6.041 (Markov Chains):**
- The stationary distribution of a 4-state Markov transition matrix is computed as the left eigenvector of $P$ using 18.06 matrix routines. The spectral vector matched a 200,000-step 6.041 simulation to within $0.0039$.
+   The stationary distribution of a 4-state Markov transition matrix is computed as the left eigenvector of $P$ using 18.06 matrix routines. The spectral vector matched a 200,000-step 6.041 simulation to within $0.0039$.
 3. **6.041 (MLE) + 18.06 (Matrix Calculus) $\to$ 6.036 (Neural Networks):**
- The cross-entropy loss is the negative log-likelihood of a Bernoulli model. The combined gradient $\frac{\partial L}{\partial Z} = A - Y$ algebraically cancels the denominator $A(1-A)$, avoiding floating-point division-by-zero when activations saturate.
+   The cross-entropy loss is the negative log-likelihood of a Bernoulli model. The combined gradient $\frac{\partial L}{\partial Z} = A - Y$ algebraically cancels the denominator $A(1-A)$, avoiding floating-point division-by-zero when activations saturate.
+
+#### 2. Original Synthesis Framework: The Computational Reliability Index (CRI)
+We formulate a unified safety metric $\rho \in [0, 1]$ mapping empirical degradation against critical failure tolerances across all six computational domains:
+$$\rho = \frac{1}{1 + \left(\frac{\text{Error}}{\text{Error}_{\text{crit}}}\right)^2}$$
+where $\rho \to 1.0$ indicates that machine execution faithfully reflects mathematical guarantees, $\rho = 0.5$ marks the critical transition threshold, and $\rho \to 0.0$ signifies catastrophic breakdown.
+
+#### CRI Profile Across All Six Disciplines
+| Domain | Safe Implementation | Safe CRI | Failure Mode | Fail CRI |
+|---|---|---|---|---|
+| **1. QR Orthogonalization** | Modified Gram-Schmidt ($\kappa=10^8$) | **1.0000** | Classical Gram-Schmidt ($\kappa=10^8$) | **0.0006** |
+| **2. SVD Factorization** | LAPACK Direct SVD ($\kappa=10^9$) | **1.0000** | $A^TA$ Normal Equations ($\kappa=10^9$) | **0.0008** |
+| **3. Gradient Verification** | Finite Difference ($\epsilon^* = 10^{-5}$) | **1.0000** | Finite Difference ($\epsilon = 10^{-14}$) | **0.0000** |
+| **4. Bayesian Inference** | Adaptive Updating (Regime Shift) | **0.9615** | Static i.i.d. Updating (Regime Shift) | **0.0110** |
+| **5. Heuristic Search** | A\* with Lexicographic Tie-Break | **1.0000** | A\* with Inadmissible Heuristic ($1.5\times$) | **0.0000** |
+| **6. Algebraic Precision** | Discrete Modular RSA in $\mathbb{Z}/n\mathbb{Z}$ | **1.0000** | IEEE-754 float64 Bit Cancellation | **0.0000** |
 
 ---
 
 ## How to Replicate
 
-All code is self-contained and reproducible. To run the full verification suite and regenerate all figures:
+All code is self-contained and reproducible. To run the full verification suite and regenerate all six figures:
 
 ```bash
 python3 capstone/run_experiments.py
