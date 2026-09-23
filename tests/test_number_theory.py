@@ -82,3 +82,25 @@ def test_mod_pow_edge_cases():
     assert pow_fn(5, 100, 1) == 0
 
 
+def test_rsa_encrypt_rejects_oversized_message():
+    """Encrypting a message >= n should raise ValueError."""
+    keygen_fn = getattr(nt, "generate_rsa_keypair", getattr(nt, "rsa_keygen", None))
+    pub, _ = keygen_fn(bits=256)
+    n, e = pub
+    with pytest.raises(ValueError, match="smaller than the modulus"):
+        nt.rsa_encrypt(n + 1, pub)
+
+
+def test_encode_decode_text_roundtrip():
+    """Text encoding/decoding should be a perfect roundtrip."""
+    if not hasattr(nt, "encode_text") or not hasattr(nt, "decode_text"):
+        pytest.skip("encode_text/decode_text not available")
+    original = "Hello, 6.042J! [MIT-OCW]"
+    assert nt.decode_text(nt.encode_text(original)) == original
+
+
+def test_miller_rabin_on_carmichael_numbers():
+    """Miller-Rabin should correctly identify Carmichael numbers as composite."""
+    carmichael = [561, 1105, 1729, 2465, 2821, 6601]
+    for c in carmichael:
+        assert nt.is_probable_prime(c, rounds=20) is False, f"{c} is Carmichael but reported prime"
