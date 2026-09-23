@@ -150,3 +150,54 @@ def minimax(node, maximizing, counter):
         return min(minimax(child, True, counter) for child in node.children)
 
 
+def minimax_alpha_beta(node, maximizing, alpha, beta, counter):
+    """
+    Minimax with alpha-beta pruning.
+
+    Correctness claim: pruning a branch never changes the value returned at
+    the root. Proof sketch for the MAX case: suppose at a MAX node we have
+    already found a child value >= beta (the best value the MIN ancestor
+    above us is guaranteed to be able to force elsewhere). Any further
+    children of this MAX node can only make this node's value larger still
+    (MAX only ever increases its choice), which the MIN ancestor will never
+    select anyway once it has an alternative <= beta available. So the
+    remaining children are provably irrelevant to the final root value and
+    can be skipped -- this is exactly a beta cutoff. The alpha cutoff at MIN
+    nodes is the mirror-image argument.
+    """
+    counter[0] += 1
+    if not node.children:
+        return node.value
+
+    if maximizing:
+        value = -math.inf
+        for child in node.children:
+            value = max(value, minimax_alpha_beta(child, False, alpha, beta, counter))
+            alpha = max(alpha, value)
+            if alpha >= beta:
+                break  # beta cutoff: remaining siblings cannot affect the result
+        return value
+    else:
+        value = math.inf
+        for child in node.children:
+            value = min(value, minimax_alpha_beta(child, True, alpha, beta, counter))
+            beta = min(beta, value)
+            if alpha >= beta:
+                break  # alpha cutoff
+        return value
+
+
+def build_random_game_tree(depth, branching, rng):
+    """Builds a synthetic game tree of the given depth/branching factor with
+    random leaf evaluation values, for benchmarking."""
+    if depth == 0:
+        return GameNode(value=rng.randint(-100, 100))
+    children = [build_random_game_tree(depth - 1, branching, rng) for _ in range(branching)]
+    return GameNode(children=children)
+
+
+# ===========================================================================
+# PART 3  --  Backtracking CSP with forward checking, applied to graph coloring
+# (Pset 6-7)
+# ===========================================================================
+
