@@ -100,3 +100,40 @@ def qr_modified_gram_schmidt(A: np.ndarray):
 #    the Gram-Schmidt QR decomposition above.
 # ---------------------------------------------------------------------------
 
+def eig_qr_algorithm(A: np.ndarray, iterations: int = 500):
+    """
+    Computes eigenvalues and eigenvectors of a symmetric matrix A using the
+    (unshifted) QR algorithm.
+
+    Theory: given A_0 = A, repeat A_{k+1} = R_k Q_k where A_k = Q_k R_k is a
+    QR decomposition. Each A_{k+1} is similar to A_k (A_{k+1} = Q_k^T A_k Q_k),
+    so all A_k share the same eigenvalues. For a symmetric matrix with
+    distinct eigenvalues, this sequence provably converges to a diagonal
+    matrix whose entries ARE the eigenvalues, and the accumulated product of
+    all the Q_k's converges to a matrix whose columns are the corresponding
+    eigenvectors. This works because repeated QR factorization is secretly
+    performing simultaneous power iteration on all of A's eigenvectors at once.
+
+    Restricted here to symmetric A, matching the course's emphasis (Pset 10)
+    on the spectral theorem, and because convergence to a strictly diagonal
+    (not just upper-triangular) form is guaranteed in that case.
+    """
+    A = A.astype(float)
+    n = A.shape[0]
+    Ak = A.copy()
+    Q_total = np.eye(n)
+
+    for _ in range(iterations):
+        Q, R = qr_gram_schmidt(Ak)
+        Ak = R @ Q
+        Q_total = Q_total @ Q
+
+    eigenvalues = np.diag(Ak).copy()
+    eigenvectors = Q_total
+    return eigenvalues, eigenvectors
+
+
+# ---------------------------------------------------------------------------
+# 3. Singular Value Decomposition from scratch, built on the eigensolver above
+# ---------------------------------------------------------------------------
+
