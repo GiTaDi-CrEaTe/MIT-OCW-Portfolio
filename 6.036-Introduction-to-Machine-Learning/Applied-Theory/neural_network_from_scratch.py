@@ -153,3 +153,17 @@ class NeuralNetwork:
 
         return grads_W, grads_b
 
+    def train_step(self, X, y, learning_rate):
+        a_L, cache = self.forward(X)
+        loss = self.compute_loss(a_L, y)
+        grads_W, grads_b = self.backward(y, cache)
+        for l in range(self.L):
+            self.W[l] -= learning_rate * grads_W[l]
+            self.b[l] -= learning_rate * grads_b[l]
+        return loss
+
+    def predict(self, X):
+        a_L, _ = self.forward(X)
+        return (a_L > 0.5).astype(int)
+
+    # -- parameter (de)serialization, used by the gradient checker below --
