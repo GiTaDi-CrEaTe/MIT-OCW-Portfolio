@@ -73,3 +73,21 @@ def extended_gcd(a: int, b: int):
     return old_r, old_x, old_y  # g, x, y
 
 
+def mod_inverse(a: int, m: int) -> int:
+    """
+    Modular inverse of a mod m, i.e. the unique x in [0, m) with a*x ≡ 1 (mod m).
+    Exists iff gcd(a, m) = 1 (this is exactly Bezout's identity specialized
+    to g = 1).
+    """
+    g, x, _ = extended_gcd(a, m)
+    if g != 1:
+        raise ValueError(f"No modular inverse: gcd({a}, {m}) = {g} != 1")
+    return x % m
+
+
+# ---------------------------------------------------------------------------
+# 2. Modular exponentiation by repeated squaring  --  O(log exponent) multiplications
+#    instead of the naive O(exponent). This is the computational engine that
+#    makes RSA feasible at all.
+# ---------------------------------------------------------------------------
+
