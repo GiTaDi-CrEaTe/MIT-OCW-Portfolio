@@ -129,3 +129,27 @@ class NeuralNetwork:
         m = y.shape[1]
         return float(-(1.0 / m) * np.sum(y * np.log(a_L) + (1 - y) * np.log(1 - a_L)))
 
+    def backward(self, y, cache):
+        """
+        Full backpropagation, layer by layer, following exactly the chain-rule
+        recap at the top of this file.
+        """
+        m = y.shape[1]
+        grads_W = [None] * self.L
+        grads_b = [None] * self.L
+
+        a_L = cache[f"a{self.L}"]
+        dz = a_L - y  # dJ/dz_L, using the sigmoid+cross-entropy simplification
+
+        for l in reversed(range(self.L)):
+            a_prev = cache[f"a{l}"] if l > 0 else cache["a0"]
+            grads_W[l] = (1.0 / m) * (dz @ a_prev.T)
+            grads_b[l] = (1.0 / m) * np.sum(dz, axis=1, keepdims=True)
+
+            if l > 0:
+                da_prev = self.W[l].T @ dz             # propagate error one layer back
+                z_prev = cache[f"z{l}"]
+                dz = da_prev * self.hidden_act_prime(z_prev)  # apply chain rule through activation
+
+        return grads_W, grads_b
+
