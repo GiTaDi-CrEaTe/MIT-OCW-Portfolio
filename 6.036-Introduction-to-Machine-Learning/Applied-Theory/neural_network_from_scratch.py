@@ -122,3 +122,10 @@ class NeuralNetwork:
             cache[f"a{l+1}"] = a
         return a, cache
 
+    def compute_loss(self, a_L, y):
+        """Binary cross-entropy, averaged over examples. Clipped for numerical safety."""
+        eps = 1e-12
+        a_L = np.clip(a_L, eps, 1 - eps)
+        m = y.shape[1]
+        return float(-(1.0 / m) * np.sum(y * np.log(a_L) + (1 - y) * np.log(1 - a_L)))
+
