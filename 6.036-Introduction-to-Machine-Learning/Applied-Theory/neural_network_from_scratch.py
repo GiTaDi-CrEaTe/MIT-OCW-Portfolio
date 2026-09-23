@@ -254,3 +254,59 @@ def make_two_rings(n_per_class=200, seed=36):
 # Self-verification
 # ---------------------------------------------------------------------------
 
+def _self_test():
+    print("=" * 70)
+    print("SELF-TEST 1: Numerical gradient check on random data")
+    print("(confirms the hand-derived backprop gradients are correct BEFORE")
+    print("using them to train anything)")
+    print("=" * 70)
+    rng = np.random.default_rng(36)
+    X_toy = rng.standard_normal((4, 20))
+    y_toy = (rng.random((1, 20)) > 0.5).astype(float)
+    net = NeuralNetwork(layer_sizes=[4, 6, 5, 1], hidden_activation="tanh", seed=1)
+    max_rel_error = numerical_gradient_check(net, X_toy, y_toy, epsilon=1e-5, num_checks=40)
+    print(f"Max relative error (analytic vs. finite-difference gradient): {max_rel_error:.2e}")
+    assert max_rel_error < 1e-4, "Backprop gradients do not match finite-difference approximation!"
+    print("PASSED: hand-derived backpropagation matches numerical differentiation.\n")
+
+    print("=" * 70)
+    print("SELF-TEST 2: A single linear layer (logistic regression) CANNOT")
+    print("separate the two-rings dataset -- demonstrating why depth matters,")
+    print("not just asserting it")
+    print("=" * 70)
+    X, y = make_two_rings(n_per_class=200, seed=36)
+    linear_model = NeuralNetwork(layer_sizes=[2, 1], seed=2)  # no hidden layer = logistic regression
+    for _ in range(2000):
+        linear_model.train_step(X, y, learning_rate=0.5)
+    linear_preds = linear_model.predict(X)
+    linear_accuracy = float(np.mean(linear_preds == y))
+    print(f"Logistic regression (no hidden layer) accuracy on two-rings: {linear_accuracy:.3f}")
+    assert linear_accuracy < 0.75, "Linear model should NOT be able to solve this non-linear task."
+    print("Confirms: a linear decision boundary cannot separate concentric rings.\n")
+
+    print("=" * 70)
+    print("SELF-TEST 3: A 2-hidden-layer network solves the same task well")
+    print("=" * 70)
+    deep_net = NeuralNetwork(layer_sizes=[2, 16, 16, 1], hidden_activation="tanh", seed=3)
+    n_epochs = 3000
+    losses = []
+    for epoch in range(n_epochs):
+        loss = deep_net.train_step(X, y, learning_rate=0.3)
+        if epoch % 500 == 0:
+            losses.append(loss)
+            print(f"  epoch {epoch:4d}   loss = {loss:.4f}")
+    deep_preds = deep_net.predict(X)
+    deep_accuracy = float(np.mean(deep_preds == y))
+    print(f"Final training loss: {loss:.4f}")
+    print(f"2-hidden-layer network accuracy on two-rings: {deep_accuracy:.3f}")
+    assert deep_accuracy > 0.95, "Deep network should solve the non-linear task with high accuracy."
+    assert losses[-1] < losses[0], "Loss should decrease over training."
+    print("PASSED: non-linear hidden layers solve a task linear models provably cannot.\n")
+
+    print("All self-tests passed. Backpropagation is verified against finite")
+    print("differences, and the resulting network demonstrably solves a task")
+    print("that is provably out of reach for a linear model.")
+
+
+if __name__ == "__main__":
+    _self_test()
