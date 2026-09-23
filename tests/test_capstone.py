@@ -9,7 +9,11 @@ from capstone.svd_investigation import svd_via_ata
 from capstone.search_efficiency import GridMap, run_astar, h_manhattan, h_zero
 from capstone.gradient_precision import MiniMLP
 from capstone.model_misspecification import generate_regime_switching_stream, run_bayesian_iid_updating
-from capstone.cross_course_synthesis import verify_discrete_vs_continuous_precision, synthesize_eigensolver_and_markov_chain
+from capstone.cross_course_synthesis import (
+    verify_discrete_vs_continuous_precision,
+    synthesize_eigensolver_and_markov_chain,
+    evaluate_computational_reliability_index,
+)
 
 
 def test_capstone_cgs_vs_mgs_loss_of_orthogonality():
@@ -58,21 +62,32 @@ def test_capstone_astar_optimality():
     start = (0, 0)
     goal = (19, 19)
 
-    dij_cost, dij_nodes = run_astar(grid, start, goal, h_zero)
-    a_cost, a_nodes = run_astar(grid, start, goal, h_manhattan)
+    dij_cost, dij_nodes = run_astar(grid, start, goal, h_zero, tie_break=False)
+    a_cost, a_nodes = run_astar(grid, start, goal, h_manhattan, tie_break=False)
+    tb_cost, tb_nodes = run_astar(grid, start, goal, h_manhattan, tie_break=True)
 
     if dij_cost is not None:
         assert np.isclose(dij_cost, a_cost)
+        assert np.isclose(dij_cost, tb_cost)
         assert a_nodes <= dij_nodes
+        assert tb_nodes <= a_nodes
 
 
 def test_capstone_cross_synthesis_discrete_precision():
     res = verify_discrete_vs_continuous_precision()
     assert res["discrete_error"] == 0.0
     assert res["float64_cancellation_error"] == 1.0
+    assert res["rsa_reconstruction_error"] == 0.0
 
 
 def test_capstone_markov_spectral_synthesis():
     res = synthesize_eigensolver_and_markov_chain()
     assert res["max_spectral_vs_empirical_gap"] < 0.02
 
+
+def test_capstone_computational_reliability_index():
+    cri_data = evaluate_computational_reliability_index()
+    assert len(cri_data) == 6
+    for domain, res in cri_data.items():
+        assert res["safe_cri"] > 0.8, f"{domain} safe CRI too low: {res['safe_cri']}"
+        assert res["fail_cri"] < 0.2, f"{domain} fail CRI too high: {res['fail_cri']}"

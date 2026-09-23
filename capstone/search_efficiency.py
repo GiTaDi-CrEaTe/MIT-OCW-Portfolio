@@ -7,15 +7,21 @@ Research Question:
   path optimality, and what happens when the heuristic overestimates?
 
 Theoretical Guarantees:
-  1. Dijkstra's Algorithm (h = 0):
-     Guaranteed optimal on non-negative edge weights. Explores a circular/diamond
-     wavefront of area O(V).
-  2. A* with Admissible & Consistent Heuristic (h(n) <= h*(n)):
+  1. Dijkstra Algorithm (h = 0):
+     Guaranteed optimal on non-negative edge weights. Explores a circular wavefront
+     of area O(V).
+  2. A* with Admissible and Consistent Heuristic (h(n) <= h*(n)):
      Guaranteed optimal: the first time a goal node is expanded, its path is minimal.
      Prunes the search space by focusing the expansion ellipse toward the goal.
      Since Manhattan distance h_M(u, v) >= Euclidean distance h_E(u, v) on a 4-connected grid,
      h_M strictly dominates h_E: A*(h_M) expands no more nodes than A*(h_E).
-  3. A* with Inadmissible Heuristic (weight w > 1.0, e.g., w * h_M):
+  3. Lexicographic Tie-Breaking (Preserving Admissibility):
+     On grids, many paths share identical f-scores f = g + h. Rather than inflating h
+     by a factor (1 + eps) which breaks strict admissibility (since (1 + eps)*h can exceed h*),
+     true lexicographic tie-breaking keeps f = g + h strictly unscaled, and breaks ties
+     among equal-f states by prioritizing states with smaller remaining heuristic distance h.
+     This preserves the mathematical admissibility theorem while collapsing plateau expansions.
+  4. A* with Inadmissible Heuristic (weight w > 1.0, e.g., w * h_M):
      Sacrifices the mathematical optimality guarantee. It expands significantly fewer nodes
      ("greedy search"), but risks returning suboptimal paths.
 """
@@ -60,9 +66,11 @@ def h_manhattan(a: Tuple[int, int], b: Tuple[int, int]) -> float:
 
 
 def h_manhattan_tiebreak(a: Tuple[int, int], b: Tuple[int, int]) -> float:
-    """Manhattan distance with microscopic tie-breaking factor (1 + 1e-4).
-    Still admissible for all practical purposes, but breaks plateaus toward the goal."""
-    return (1.0 + 1e-4) * float(abs(a[0] - b[0]) + abs(a[1] - b[1]))
+    """
+    Maintained for backward compatibility: pure Manhattan distance.
+    Tie-breaking is now handled lexicographically in the priority queue.
+    """
+    return float(abs(a[0] - b[0]) + abs(a[1] - b[1]))
 
 
 def h_inadmissible(a: Tuple[int, int], b: Tuple[int, int], weight: float = 1.5) -> float:
@@ -75,21 +83,29 @@ def run_astar(
     start: Tuple[int, int],
     goal: Tuple[int, int],
     heuristic_fn: Callable[[Tuple[int, int], Tuple[int, int]], float],
+    tie_break: bool = False,
 ) -> Tuple[Optional[float], int]:
     """
-    Runs A* search.
+    Runs A* search with optional lexicographic tie-breaking.
+    When tie_break is True, equal f-score states are resolved by preferring
+    the state with minimal remaining heuristic distance h. Because f = g + h
+    is strictly unmodified and h is unscaled, admissibility and optimality
+    guarantees are fully preserved.
+
     Returns: (path_length, nodes_expanded). Returns (None, nodes_expanded) if unreachable.
     """
-    counter = 0  # Tie-breaker for heap
-    pq: List[Tuple[float, float, int, Tuple[int, int]]] = []  # (f, g, count, node)
-    heapq.heappush(pq, (heuristic_fn(start, goal), 0.0, counter, start))
+    counter = 0  # Tie-breaker for heap on identical (f, secondary)
+    pq: List[Tuple[float, float, int, Tuple[int, int]]] = []  # (f, secondary_key, count, node)
+    h_start = heuristic_fn(start, goal)
+    sec_start = h_start if tie_break else 0.0
+    heapq.heappush(pq, (h_start, sec_start, counter, start))
 
     g_score: Dict[Tuple[int, int], float] = {start: 0.0}
     closed_set: Set[Tuple[int, int]] = set()
     nodes_expanded = 0
 
     while pq:
-        f, g, _, curr = heapq.heappop(pq)
+        f, _, _, curr = heapq.heappop(pq)
 
         if curr in closed_set:
             continue
@@ -97,15 +113,16 @@ def run_astar(
         nodes_expanded += 1
 
         if curr == goal:
-            return g, nodes_expanded
+            return g_score[goal], nodes_expanded
 
         for nbr in grid.neighbors(curr):
-            tentative_g = g + 1.0
+            tentative_g = g_score[curr] + 1.0
             if nbr not in g_score or tentative_g < g_score[nbr]:
                 g_score[nbr] = tentative_g
                 h_nbr = heuristic_fn(nbr, goal)
+                sec_nbr = h_nbr if tie_break else 0.0
                 counter += 1
-                heapq.heappush(pq, (tentative_g + h_nbr, tentative_g, counter, nbr))
+                heapq.heappush(pq, (tentative_g + h_nbr, sec_nbr, counter, nbr))
 
     return None, nodes_expanded
 
@@ -119,11 +136,11 @@ def run_benchmark_sweep(
     Executes a multi-parameter sweep across grid dimensions and obstacle densities.
     """
     algorithms = {
-        "Dijkstra (h=0)": h_zero,
-        "A* (Euclidean)": h_euclidean,
-        "A* (Manhattan)": h_manhattan,
-        "A* (Manhattan + Tie-Break)": h_manhattan_tiebreak,
-        "A* (Inadmissible w=1.5)": lambda a, b: h_inadmissible(a, b, weight=1.5),
+        "Dijkstra (h=0)": (h_zero, False),
+        "A* (Euclidean)": (h_euclidean, False),
+        "A* (Manhattan)": (h_manhattan, False),
+        "A* (Manhattan + Lexicographic Tie-Break)": (h_manhattan, True),
+        "A* (Inadmissible w=1.5)": (lambda a, b: h_inadmissible(a, b, weight=1.5), False),
     }
 
     results: Dict[str, Dict] = {algo: {"nodes": [], "suboptimal_count": 0, "total_valid": 0} for algo in algorithms}
@@ -143,7 +160,7 @@ def run_benchmark_sweep(
                 seed += 1
 
                 # First run Dijkstra to get ground-truth shortest path
-                opt_cost, dij_nodes = run_astar(grid, start, goal, algorithms["Dijkstra (h=0)"])
+                opt_cost, dij_nodes = run_astar(grid, start, goal, algorithms["Dijkstra (h=0)"][0], tie_break=False)
                 if opt_cost is None:
                     continue  # Unreachable configuration, discard
 
@@ -151,10 +168,10 @@ def run_benchmark_sweep(
                 nodes_by_algo["Dijkstra (h=0)"].append(dij_nodes)
                 cost_by_algo["Dijkstra (h=0)"].append(opt_cost)
 
-                for name, fn in algorithms.items():
+                for name, (fn, tb) in algorithms.items():
                     if name == "Dijkstra (h=0)":
                         continue
-                    cost, nodes = run_astar(grid, start, goal, fn)
+                    cost, nodes = run_astar(grid, start, goal, fn, tie_break=tb)
                     nodes_by_algo[name].append(nodes)
                     cost_by_algo[name].append(cost if cost is not None else float("inf"))
 
@@ -166,15 +183,17 @@ def run_benchmark_sweep(
                 "size": size,
                 "density": density,
                 "dijkstra_nodes": float(np.mean(nodes_by_algo["Dijkstra (h=0)"])),
+                "dijkstra_nodes_std": float(np.std(nodes_by_algo["Dijkstra (h=0)"])),
                 "euclidean_nodes": float(np.mean(nodes_by_algo["A* (Euclidean)"])),
                 "manhattan_nodes": float(np.mean(nodes_by_algo["A* (Manhattan)"])),
-                "tiebreak_nodes": float(np.mean(nodes_by_algo["A* (Manhattan + Tie-Break)"])),
+                "tiebreak_nodes": float(np.mean(nodes_by_algo["A* (Manhattan + Lexicographic Tie-Break)"])),
+                "tiebreak_nodes_std": float(np.std(nodes_by_algo["A* (Manhattan + Lexicographic Tie-Break)"])),
                 "inadmissible_nodes": float(np.mean(nodes_by_algo["A* (Inadmissible w=1.5)"])),
                 "manhattan_reduction_pct": float(
                     (1.0 - np.mean(nodes_by_algo["A* (Manhattan)"]) / np.mean(nodes_by_algo["Dijkstra (h=0)"])) * 100.0
                 ),
                 "tiebreak_reduction_pct": float(
-                    (1.0 - np.mean(nodes_by_algo["A* (Manhattan + Tie-Break)"]) / np.mean(nodes_by_algo["Dijkstra (h=0)"])) * 100.0
+                    (1.0 - np.mean(nodes_by_algo["A* (Manhattan + Lexicographic Tie-Break)"]) / np.mean(nodes_by_algo["Dijkstra (h=0)"])) * 100.0
                 ),
             }
             sweep_records.append(record)
@@ -202,5 +221,4 @@ if __name__ == "__main__":
     for algo, res in data["summary"].items():
         if res["total_valid"] > 0:
             rate = (res["suboptimal_count"] / res["total_valid"]) * 100.0
-            print(f"  {algo:<28}: Suboptimal paths = {res['suboptimal_count']}/{res['total_valid']} ({rate:.1f}%)")
-
+            print(f"  {algo:<40}: Suboptimal paths = {res['suboptimal_count']}/{res['total_valid']} ({rate:.1f}%)")
