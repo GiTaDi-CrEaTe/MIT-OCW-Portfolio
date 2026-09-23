@@ -64,3 +64,29 @@ def euclidean_heuristic(a, b):
     return math.dist(a, b)
 
 
+def dijkstra_grid(nodes, neighbors, start, goal):
+    """Uniform-cost search (Dijkstra) as a ground-truth baseline: guaranteed
+    optimal, but explores purely by accumulated cost with no goal-directed
+    guidance."""
+    dist = {start: 0}
+    prev = {}
+    visited = set()
+    heap = [(0, start)]
+    expansions = 0
+    while heap:
+        d, node = heapq.heappop(heap)
+        if node in visited:
+            continue
+        visited.add(node)
+        expansions += 1
+        if node == goal:
+            break
+        for nxt in neighbors(node):
+            nd = d + 1
+            if nxt not in dist or nd < dist[nxt]:
+                dist[nxt] = nd
+                prev[nxt] = node
+                heapq.heappush(heap, (nd, nxt))
+    return dist.get(goal, math.inf), expansions
+
+
