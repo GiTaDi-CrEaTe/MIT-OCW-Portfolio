@@ -90,3 +90,100 @@ def dijkstra_grid(nodes, neighbors, start, goal):
     return dist.get(goal, math.inf), expansions
 
 
+def a_star_grid(nodes, neighbors, start, goal, heuristic):
+    """
+    A* search: identical to Dijkstra except nodes in the priority queue are
+    ordered by f(n) = g(n) + h(n), where g(n) is the accumulated cost so far
+    and h(n) is the admissible heuristic estimate of remaining cost.
+
+    Optimality proof sketch (why this still finds the shortest path):
+    because h never overestimates, f(n) never overestimates the true cost of
+    the best path through n. So when the goal is popped from the priority
+    queue, no other node in the queue could possibly lead to a shorter path
+    to the goal -- if one did, its f-value (a valid lower bound on its true
+    cost) would have been smaller and it would have been popped first.
+    """
+    g_score = {start: 0}
+    prev = {}
+    visited = set()
+    heap = [(heuristic(start, goal), start)]
+    expansions = 0
+    while heap:
+        f, node = heapq.heappop(heap)
+        if node in visited:
+            continue
+        visited.add(node)
+        expansions += 1
+        if node == goal:
+            break
+        for nxt in neighbors(node):
+            tentative_g = g_score[node] + 1
+            if nxt not in g_score or tentative_g < g_score[nxt]:
+                g_score[nxt] = tentative_g
+                prev[nxt] = node
+                heapq.heappush(heap, (tentative_g + heuristic(nxt, goal), nxt))
+    return g_score.get(goal, math.inf), expansions
+
+
+# ===========================================================================
+# PART 2  --  Minimax with alpha-beta pruning (Pset 4-5)
+# ===========================================================================
+
+class GameNode:
+    """A minimal synthetic game tree node: internal nodes alternate
+    MAX/MIN; leaves carry a static evaluation value."""
+
+    def __init__(self, children=None, value=None):
+        self.children = children or []
+        self.value = value  # only set for leaves
+
+
+def minimax(node, maximizing, counter):
+    """Plain minimax with no pruning -- the ground-truth baseline. `counter`
+    is a mutable [int] used to count node visits for the benchmark."""
+    counter[0] += 1
+    if not node.children:
+        return node.value
+    if maximizing:
+        return max(minimax(child, False, counter) for child in node.children)
+    else:
+        return min(minimax(child, True, counter) for child in node.children)
+
+
+def minimax_alpha_beta(node, maximizing, alpha, beta, counter):
+    """
+    Minimax with alpha-beta pruning.
+
+    Correctness claim: pruning a branch never changes the value returned at
+    the root. Proof sketch for the MAX case: suppose at a MAX node we have
+    already found a child value >= beta (the best value the MIN ancestor
+    above us is guaranteed to be able to force elsewhere). Any further
+    children of this MAX node can only make this node's value larger still
+    (MAX only ever increases its choice), which the MIN ancestor will never
+    select anyway once it has an alternative <= beta available. So the
+    remaining children are provably irrelevant to the final root value and
+    can be skipped -- this is exactly a beta cutoff. The alpha cutoff at MIN
+    nodes is the mirror-image argument.
+    """
+    counter[0] += 1
+    if not node.children:
+        return node.value
+
+    if maximizing:
+        value = -math.inf
+        for child in node.children:
+            value = max(value, minimax_alpha_beta(child, False, alpha, beta, counter))
+            alpha = max(alpha, value)
+            if alpha >= beta:
+                break  # beta cutoff: remaining siblings cannot affect the result
+        return value
+    else:
+        value = math.inf
+        for child in node.children:
+            value = min(value, minimax_alpha_beta(child, True, alpha, beta, counter))
+            beta = min(beta, value)
+            if alpha >= beta:
+                break  # alpha cutoff
+        return value
+
+
