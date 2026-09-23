@@ -1,23 +1,27 @@
-# 6.042J — Mathematics for Computer Science
+# 6.042J --  Mathematics for Computer Science
+*Foundations Lab: Discrete Exactness and Number-Theoretic Invariants*
 
-**MIT OCW subject:** 6.042J / 18.062J, taught jointly by EECS and Mathematics.
+---
 
-## What this course is
+### Core Question
+Why does modular arithmetic in integer rings $\mathbb{Z}/n\mathbb{Z}$ provide exact computational guarantees that continuous floating-point algorithms cannot match?
 
-6.042 is the discrete-math backbone every other course in this repository leans on. It covers propositional and predicate logic, mathematical induction (including strong induction and well-ordering), graph theory, number theory (divisibility, GCDs, modular arithmetic, the foundations of RSA), counting and combinatorics, and an introduction to discrete probability. The through-line of the course is *proof technique* — every topic is really an excuse to practice building airtight arguments.
+### The Mathematical Guarantee
+- **Bézout's Identity:** If $\gcd(a, m) = 1$, there exist integers $x, y$ such that $a x + m y = 1$, guaranteeing that $a$ has a unique modular inverse $x \equiv a^{-1} \pmod m$.
+- **Euler's Totient Theorem:** For any $m$ coprime to $n = p \cdot q$, $m^{\phi(n)} \equiv 1 \pmod n$, where $\phi(n) = (p-1)(q-1)$.
+- **RSA Correctness:** When $e \cdot d \equiv 1 \pmod{\phi(n)}$, then $(m^e)^d \equiv m^{1 + k\phi(n)} \equiv m \pmod n$ for all $m < n$.
 
-## Why it matters for this portfolio
+### What the Code Investigates
+[`number_theory_cryptography.py`](./Applied-Theory/number_theory_cryptography.py) builds the entire public-key cryptographic pipeline from first principles:
+1. **Euclidean & Extended Euclidean Algorithm:** Computes $\gcd(a, b)$ and Bézout coefficients iteratively without recursion depth limits.
+2. **Modular Exponentiation by Repeated Squaring:** Computes $b^e \pmod m$ in $O(\log e)$ operations without materializing astronomically large intermediate integers.
+3. **Miller-Rabin Randomized Primality Test:** Uses Fermat's Little Theorem and roots of unity to test large odd integers with failure probability bounded by $4^{-k}$.
+4. **RSA Key Generation, Encryption, and Decryption:** Implements the complete theory-to-implementation pipeline.
 
-Every later course assumes this material without restating it:
-- 6.006's correctness proofs (loop invariants, exchange arguments) are induction in disguise.
-- 6.041's discrete probability chapters are a direct continuation of 6.042's counting unit.
-- RSA and hashing (used in 6.006 and touched on again here) depend entirely on the number theory covered in weeks 7–9 of 6.042.
+### Empirical Findings & Failure Modes
+- **Zero Roundoff Error:** In contrast to floating-point linear algebra, integer arithmetic on 512-bit keys exhibits **zero precision drift** ($|m_{\text{recovered}} - m_{\text{original}}| = 0$).
+- **Non-Constant Time Arithmetic:** In Python, arbitrary-precision integer arithmetic executes in variable time, revealing that mathematical correctness does not guarantee cryptographic side-channel immunity.
+- **Failure Mode with Composite Moduli in Inverses:** Attempting to find modular inverse when $\gcd(a, m) > 1$ raises `ValueError`, verifying Bézout's precondition.
 
-## What I focused on
-
-The `Applied-Theory/` implementation in this folder builds public-key cryptography (RSA) entirely from the number-theoretic primitives taught in the course: modular exponentiation by repeated squaring, the Extended Euclidean Algorithm for modular inverses, and the Miller–Rabin primality test (a randomized algorithm whose correctness proof itself depends on Fermat's Little Theorem and the structure of the multiplicative group mod a prime). I picked RSA specifically because it is the single cleanest demonstration that abstract number theory — statements about divisibility and congruence — has direct, load-bearing computational consequences.
-
-## Folder contents
-
-- [`Psets/pset_roadmap.md`](./Psets/pset_roadmap.md) — topic-by-topic breakdown of the syllabus and the problem sets I worked through.
-- [`Applied-Theory/number_theory_cryptography.py`](./Applied-Theory/number_theory_cryptography.py) — RSA key generation, encryption, and decryption built from scratch, with a Miller–Rabin primality tester and Extended Euclid implementation, and an internal correctness/round-trip check.
+### Capstone & Cross-Course Connection
+In the [Capstone Synthesis](../capstone/README.md#experiment-6--cross-course-synthesis-connecting-the-six-disciplines), 6.042's exact integer arithmetic is directly contrasted with 18.06's floating-point cancellation. While 6.042 integer arithmetic guarantees $(m^e)^d \equiv m \pmod n$ with $0$ error, float64 addition fails basic associativity: $(10^{16} + 1.0) - 10^{16} - 1.0 = -1.0$.
