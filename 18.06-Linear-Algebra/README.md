@@ -1,27 +1,27 @@
-# 18.06 — Linear Algebra
+# 18.06 --  Linear Algebra
+*Foundations Lab: Vector Decompositions and Numerical Stability*
 
-**MIT OCW subject:** 18.06, Department of Mathematics (Gilbert Strang's course).
+---
 
-## What this course is
+### Core Question
+When does mathematically exact linear algebra become numerically unreliable on floating-point hardware?
 
-18.06 treats linear algebra computationally and geometrically rather than purely axiomatically: the four fundamental subspaces, elimination and LU decomposition, orthogonality and projections, determinants, eigenvalues/eigenvectors, and the Singular Value Decomposition as the course's capstone idea — "the right basis for the matrix." The course's central habit of mind is to always ask *what does this operation do to space*, not just how to compute it.
+### The Mathematical Guarantee
+- **Orthogonal Basis (QR):** Every full-rank matrix $A \in \mathbb{R}^{m \times n}$ can be factored as $A = QR$, where $Q$ has orthonormal columns ($Q^T Q = I$) and $R$ is upper triangular.
+- **Spectral Theorem:** Every real symmetric matrix $S = S^T$ has real eigenvalues and an orthonormal eigenbasis: $S = V \Lambda V^T$.
+- **Singular Value Decomposition (SVD):** Every real matrix $A$ decomposes as $A = U \Sigma V^T$, where singular values are $\sigma_i = \sqrt{\lambda_i(A^TA)}$.
+- **Perron-Frobenius Theorem:** A column-stochastic irreducible matrix $M$ has a unique steady-state vector satisfying $M \pi = \pi$.
 
-## Why it matters for this portfolio
+### What the Code Investigates
+[`linear_algebra_from_scratch.py`](./Applied-Theory/linear_algebra_from_scratch.py) implements the core matrix factorizations from first principles using NumPy arrays alone (no `numpy.linalg` for solver routines):
+1. **Classical & Modified Gram-Schmidt:** Constructive orthogonalization and upper-triangular coefficient extraction.
+2. **Iterative QR Algorithm:** Eigenvalue and eigenvector computation via similarity transformations ($A_{k+1} = R_k Q_k = Q_k^T A_k Q_k$).
+3. **From-Scratch SVD:** Derives $\Sigma$ and $V$ from the eigenstructure of $A^TA$, and recovers $U$ via $u_i = \frac{1}{\sigma_i} A v_i$.
+4. **PageRank Power Iteration:** Dominant eigenvector computation of the Google Markov transition matrix.
 
-Linear algebra is the shared vocabulary underneath both the algorithms course and the ML course in this repository:
-- 6.036's linear regression is literally a least-squares projection problem — Applied-Theory subspace projections done in a supervised-learning wrapper.
-- PageRank-style ranking algorithms and Markov chain steady states (touched on again in 6.041) are eigenvector problems.
-- The SVD is the tool that makes precise the idea of "directions of maximum variance," which resurfaces implicitly in any dimensionality-reduction or feature-learning context.
+### Empirical Findings & Failure Modes
+- **Catastrophic Loss of Orthogonality in CGS:** When matrix condition number $\kappa(A) \ge 10^8$, Classical Gram-Schmidt completely loses orthogonality ($\|Q^T Q - I\|_2 > 0.4$, reaching $3.0$ on a $10 \times 10$ Hilbert matrix), even while the backward residual $\|A - QR\|$ remains $O(\epsilon_{\text{mach}})$. Modified Gram-Schmidt reduces this error by up to $10^7 \times$.
+- **Singular Value Obliteration via Normal Equations:** Forming $A^TA$ squares the condition number $\kappa(A^TA) = \kappa(A)^2$. For $\kappa(A) \ge 10^8$, small singular values fall below $\epsilon_{\text{mach}}$ and are wiped out to exact zero.
 
-## What I focused on
-
-The `Applied-Theory/` script in this folder builds three of the course's central algorithms entirely from scratch, verified against `numpy.linalg`'s black-box routines (used only as a correctness oracle, never as the implementation):
-
-1. **QR decomposition via Gram-Schmidt** — the constructive proof that any matrix with independent columns has an orthonormal basis for its column space.
-2. **Eigenvalues/eigenvectors via the QR algorithm** — an iterative method that repeatedly applies QR decomposition to converge to a matrix's eigenstructure, used here as the engine for a from-scratch SVD.
-3. **PageRank as a power-iteration eigenvector problem** — the steady-state vector of a Markov transition matrix is the eigenvector for eigenvalue 1, computed here via repeated matrix-vector multiplication rather than direct linear solving.
-
-## Folder contents
-
-- [`Psets/pset_roadmap.md`](./Psets/pset_roadmap.md) — topic-by-topic syllabus breakdown.
-- [`Applied-Theory/linear_algebra_from_scratch.py`](./Applied-Theory/linear_algebra_from_scratch.py) — Gram-Schmidt QR, QR-algorithm eigensolver, from-scratch SVD, and power-iteration PageRank, each checked against NumPy's reference implementation.
+### Capstone & Cross-Course Connection
+Directly powers [Capstone Experiment 1](../capstone/README.md#experiment-1--numerical-stability-classical-vs-modified-gram-schmidt) and [Capstone Experiment 2](../capstone/README.md#experiment-2--svd-via-ata-vs-direct-bidiagonalization). Furthermore, 18.06's spectral decomposition is reused to solve the stationary distributions in 6.041, and its Jacobian matrix calculus directly drives the backpropagation derivation in 6.036.
