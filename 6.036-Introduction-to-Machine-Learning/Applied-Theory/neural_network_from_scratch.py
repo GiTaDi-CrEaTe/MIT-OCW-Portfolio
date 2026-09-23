@@ -40,3 +40,30 @@ np.set_printoptions(precision=4, suppress=True)
 # Activation functions and their derivatives (needed explicitly for backprop)
 # ---------------------------------------------------------------------------
 
+def sigmoid(z):
+    return 1.0 / (1.0 + np.exp(-np.clip(z, -500, 500)))
+
+
+def sigmoid_prime(z):
+    s = sigmoid(z)
+    return s * (1 - s)
+
+
+def tanh(z):
+    return np.tanh(z)
+
+
+def tanh_prime(z):
+    return 1.0 - np.tanh(z) ** 2
+
+
+ACTIVATIONS = {
+    "sigmoid": (sigmoid, sigmoid_prime),
+    "tanh": (tanh, tanh_prime),
+}
+
+
+# ---------------------------------------------------------------------------
+# The network itself
+# ---------------------------------------------------------------------------
+
