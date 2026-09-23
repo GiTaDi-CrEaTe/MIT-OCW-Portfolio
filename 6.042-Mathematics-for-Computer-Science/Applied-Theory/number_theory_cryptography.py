@@ -49,3 +49,10 @@ import random
 # 1. Euclidean Algorithm and Extended Euclidean Algorithm
 # ---------------------------------------------------------------------------
 
+def gcd(a: int, b: int) -> int:
+    """Euclid's algorithm: gcd(a, b) = gcd(b, a mod b)."""
+    while b:
+        a, b = b, a % b
+    return a
+
+
