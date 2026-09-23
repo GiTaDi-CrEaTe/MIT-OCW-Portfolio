@@ -49,3 +49,36 @@ def bayesian_update(prior: np.ndarray, hypotheses: np.ndarray, data: int, n_tria
     return posterior
 
 
+def posterior_mean(hypotheses: np.ndarray, posterior: np.ndarray) -> float:
+    """E[theta | data] = sum_i hypotheses[i] * P(theta = hypotheses[i] | data)."""
+    return float(np.sum(hypotheses * posterior))
+
+
+# ===========================================================================
+# PART 2  --  Maximum Likelihood Estimation (Pset 8), compared to the Bayesian
+# posterior mean to show MLE as the large-n limit of Bayesian updating.
+# ===========================================================================
+
+def mle_bernoulli(data_sequence) -> float:
+    """
+    MLE for a Bernoulli parameter theta given i.i.d. coin-flip data.
+
+    Theory: the likelihood of the full sequence is
+        L(theta) = theta^k * (1-theta)^(n-k)     (k successes out of n)
+    Maximizing L is equivalent to maximizing log L (log is monotonic), and
+        d/d(theta) [k*log(theta) + (n-k)*log(1-theta)] = 0
+    solves to theta_hat = k / n -- the sample proportion. This "just count
+    and divide" answer is not a heuristic; it is the exact calculus solution
+    to the likelihood-maximization problem.
+    """
+    data_sequence = list(data_sequence)
+    n = len(data_sequence)
+    k = sum(data_sequence)
+    return k / n
+
+
+# ===========================================================================
+# PART 3  --  Markov chains: simulation vs. analytically solved stationary
+# distribution (Pset 11)
+# ===========================================================================
+
