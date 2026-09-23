@@ -215,3 +215,23 @@ class Graph:
                     queue.append(v)
         return order, distance
 
+    def dfs(self, source):
+        """
+        Depth-first search (iterative, explicit stack to avoid recursion
+        limits). Used here mainly to demonstrate edge classification, the
+        tool behind cycle detection and topological sort (Pset 8).
+        """
+        visited = set()
+        order = []
+        stack = [source]
+        while stack:
+            u = stack.pop()
+            if u in visited:
+                continue
+            visited.add(u)
+            order.append(u)
+            for v, _w in reversed(self.adj.get(u, [])):
+                if v not in visited:
+                    stack.append(v)
+        return order
+
