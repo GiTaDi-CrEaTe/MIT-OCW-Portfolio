@@ -194,3 +194,15 @@ def generate_rsa_keypair(bits: int = 256):
     return (n, e), (n, d)
 
 
+def rsa_encrypt(message_int: int, public_key) -> int:
+    n, e = public_key
+    if message_int >= n:
+        raise ValueError("Message integer must be smaller than the modulus n.")
+    return mod_pow(message_int, e, n)
+
+
+def rsa_decrypt(cipher_int: int, private_key) -> int:
+    n, d = private_key
+    return mod_pow(cipher_int, d, n)
+
+
