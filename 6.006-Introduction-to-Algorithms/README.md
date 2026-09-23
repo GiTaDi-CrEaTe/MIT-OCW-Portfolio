@@ -1,23 +1,27 @@
-# 6.006 — Introduction to Algorithms
+# 6.006 --  Introduction to Algorithms
+*Foundations Lab: Invariant Preservation and Graph Complexity*
 
-**MIT OCW subject:** 6.006, EECS.
+---
 
-## What this course is
+### Core Question
+How do structural invariants protect algorithms from worst-case degeneration, and how closely do asymptotic wall-clock runtimes match Big-O theory?
 
-6.006 covers the standard rigorous algorithms sequence: asymptotic analysis, sorting, hashing, binary search trees and balanced trees (AVL), graph representations and traversal (BFS/DFS), shortest paths (Dijkstra, Bellman-Ford), and an introduction to dynamic programming. The course's discipline is proof-driven — every algorithm comes with a correctness argument (usually a loop invariant or an exchange argument) and a formal running-time bound, not just an implementation.
+### The Mathematical Guarantee
+- **AVL Height Balance Invariant:** For every node $u$, $|h(u.\text{left}) - h(u.\text{right})| \le 1$. Structural induction proves that an AVL tree of $n$ keys has height bounded by $h \le 1.44 \log_2(n) + c$, guaranteeing $O(\log n)$ search, insert, and delete.
+- **BFS Shortest Paths:** BFS visits vertices in non-decreasing order of edge-distance, guaranteeing optimal unweighted path lengths in $O(V + E)$ time.
+- **Dijkstra's Greedy Invariant:** With non-negative edge weights, the vertex popped from the min-heap has already achieved its true minimal distance.
 
-## Why it matters for this portfolio
+### What the Code Investigates
+[`graph_algorithms_and_data_structures.py`](./Applied-Theory/graph_algorithms_and_data_structures.py) implements core data structures and graph algorithms from scratch:
+1. **Self-Balancing AVL Binary Search Tree:** Implements left, right, left-right, and right-left rotations on recursive insertions.
+2. **Unbalanced BST Comparison Baseline:** Evaluates pathological degeneration on adversarial sorted inputs.
+3. **Graph Algorithms:** Adjacency-list representation with BFS, iterative DFS (with discovery/finish timestamps), and priority-queue Dijkstra.
+4. **Empirical Asymptotic Scaling:** Benchmarks wall-clock execution time of BFS across doubling vertex counts $V \in [500, 4000]$.
 
-This course is where 6.042's induction and graph theory become executable, and where the asymptotic vocabulary (O, Θ, Ω) that gets used loosely in 6.036 and 6.034 gets its formal definition:
-- The AVL tree's rebalancing correctness proof is structural induction on tree height (6.042, Pset 3-4).
-- Dijkstra's correctness proof is an inductive argument over the order in which nodes are finalized.
-- Hashing's expected-case analysis leans on linearity of expectation (6.042, Pset 14) applied to collision-counting.
+### Empirical Findings & Failure Modes
+- **AVL Invariant Preservation:** On $N = 5000$ sorted keys, the AVL tree maintained height $h = 14 \le 1.45 \log_2(5000)$, while the naive unbalanced BST degraded to a linear chain of height $5000$.
+- **Call-Stack Overflow on Degenerate Trees:** Traversal of the un-rebalanced baseline crashed Python's call stack with `RecursionError` at depth 1000, demonstrating that invariant failure creates fatal operating system runtime failures. (See [Lab Notebook](../lab_notebook/failures_and_fixes.md#log-entry-4-python-recursion-limit-on-degenerate-bst)).
+- **Asymptotic Linear Scaling:** Empirical wall-clock times for sparse graph BFS ($E \approx 4V$) scaled strictly linearly with $V$, consistent with theoretical $O(V + E)$ bounds.
 
-## What I focused on
-
-The `Applied-Theory/` script builds two structurally different but philosophically related things from scratch: (1) a self-balancing AVL binary search tree, whose entire value proposition is a *proof* — that height stays O(log n) under arbitrary insertion order — made concrete via empirical height tracking against a naive unbalanced BST; and (2) a from-scratch graph library implementing BFS, DFS, and Dijkstra's algorithm on an adjacency-list representation, with an empirical runtime-scaling experiment that checks the claimed asymptotic complexity against wall-clock behavior.
-
-## Folder contents
-
-- [`Psets/pset_roadmap.md`](./Psets/pset_roadmap.md) — topic-by-topic syllabus breakdown.
-- [`Applied-Theory/graph_algorithms_and_data_structures.py`](./Applied-Theory/graph_algorithms_and_data_structures.py) — AVL tree with rotation-based rebalancing, BFS/DFS/Dijkstra graph algorithms, and an empirical complexity-scaling benchmark.
+### Capstone & Cross-Course Connection
+The graph representations and min-heap priority queue implemented here provide the foundational computational chassis for 6.034's A* heuristic search and CSP constraint networks, and are evaluated under obstacle fields in [Capstone Experiment 3](../capstone/README.md#experiment-3--a-heuristic-search-scaling--optimality-limits).
