@@ -100,3 +100,28 @@ def simulate_markov_chain(transition_matrix: np.ndarray, start_state: int,
     return counts / n_steps
 
 
+def stationary_distribution_analytic(transition_matrix: np.ndarray) -> np.ndarray:
+    """
+    Solves for the stationary distribution pi satisfying pi = pi @ P and
+    sum(pi) = 1, directly as a linear system -- the "solve it exactly"
+    approach, to be checked against the simulation above.
+
+    Theory: pi P = pi means pi (P - I) = 0, i.e. pi is a left null vector of
+    (P - I). Combined with the normalization constraint sum(pi) = 1, this
+    pins down pi uniquely for an irreducible, aperiodic chain. We solve it by
+    replacing one equation of (P^T - I) pi^T = 0 with the normalization
+    constraint, turning it into a standard solvable linear system.
+    """
+    n = transition_matrix.shape[0]
+    A = transition_matrix.T - np.eye(n)
+    A[-1, :] = 1.0  # replace last equation with the normalization constraint
+    b = np.zeros(n)
+    b[-1] = 1.0
+    pi = np.linalg.solve(A, b)
+    return pi
+
+
+# ===========================================================================
+# Self-verification
+# ===========================================================================
+
