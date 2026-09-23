@@ -19,3 +19,33 @@ np.set_printoptions(precision=4, suppress=True)
 # PART 1  --  Bayesian inference on a discrete hypothesis space (Pset 7)
 # ===========================================================================
 
+def bayesian_update(prior: np.ndarray, hypotheses: np.ndarray, data: int, n_trials: int):
+    """
+    Discrete Bayesian updating for a Bernoulli-type experiment.
+
+    `hypotheses` is a grid of candidate success probabilities theta in [0, 1].
+    `prior[i]` = P(theta = hypotheses[i]) before seeing data.
+    `data` = number of successes observed in `n_trials` Bernoulli trials.
+
+    Theory: Bayes' rule, derived directly from the definition of conditional
+    probability P(A|B) = P(A and B) / P(B):
+
+        P(theta | data) = P(data | theta) * P(theta) / P(data)
+
+    where P(data | theta) is the Binomial likelihood
+        C(n_trials, data) * theta^data * (1-theta)^(n_trials - data)
+    and P(data) = sum over all theta of the numerator (law of total
+    probability) -- this is exactly the normalizing constant.
+
+    The binomial coefficient C(n_trials, data) is the SAME for every
+    hypothesis, so it cancels in the normalization and is omitted below --
+    a small but real efficiency/clarity gain that falls straight out of
+    the algebra.
+    """
+    likelihood = (hypotheses ** data) * ((1 - hypotheses) ** (n_trials - data))
+    unnormalized_posterior = likelihood * prior
+    evidence = unnormalized_posterior.sum()  # law of total probability
+    posterior = unnormalized_posterior / evidence
+    return posterior
+
+
