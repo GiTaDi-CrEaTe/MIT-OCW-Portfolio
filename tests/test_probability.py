@@ -28,3 +28,21 @@ def test_bayesian_update_convergence():
         assert abs(mean_est - 0.70) < 0.05
 
 
+def test_markov_chain_stationary_distribution():
+    P = np.array([
+        [0.6, 0.3, 0.1],
+        [0.2, 0.5, 0.3],
+        [0.1, 0.4, 0.5],
+    ], dtype=float)
+
+    if hasattr(prob, "stationary_distribution_analytic"):
+        pi = prob.stationary_distribution_analytic(P)
+        assert np.isclose(np.sum(pi), 1.0)
+        assert np.allclose(pi @ P, pi, atol=1e-8)
+    elif hasattr(prob, "analytical_stationary_distribution"):
+        pi = prob.analytical_stationary_distribution(P)
+        assert np.isclose(np.sum(pi), 1.0)
+        assert np.allclose(pi @ P, pi, atol=1e-8)
+
+
+
