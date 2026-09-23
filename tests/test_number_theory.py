@@ -63,3 +63,22 @@ def test_rsa_keygen_and_roundtrip():
 
 
 
+def test_mod_inverse_raises_when_not_coprime():
+    """Modular inverse should raise ValueError when gcd(a, m) != 1."""
+    with pytest.raises(ValueError, match="No modular inverse"):
+        nt.mod_inverse(6, 9)
+
+
+def test_gcd_with_zero():
+    """gcd(a, 0) should return a, gcd(0, b) should return b."""
+    assert nt.gcd(42, 0) == 42
+    assert nt.gcd(0, 37) == 37
+
+
+def test_mod_pow_edge_cases():
+    """mod_pow with edge cases: exponent 0, modulus 1."""
+    pow_fn = getattr(nt, "mod_pow", getattr(nt, "mod_exp", None))
+    assert pow_fn(5, 0, 13) == 1
+    assert pow_fn(5, 100, 1) == 0
+
+
