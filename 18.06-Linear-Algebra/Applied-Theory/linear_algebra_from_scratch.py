@@ -180,3 +180,45 @@ def svd_from_scratch(A: np.ndarray):
 #    eigensolver for the non-symmetric transition matrix directly.
 # ---------------------------------------------------------------------------
 
+def pagerank_power_iteration(link_matrix: np.ndarray, damping: float = 0.85,
+                              iterations: int = 200):
+    """
+    Theory (Pset 11): a Markov transition matrix M (columns sum to 1, entry
+    M[i, j] = probability of moving from page j to page i) has a steady-state
+    distribution pi satisfying M pi = pi -- i.e. pi is the eigenvector of M
+    for eigenvalue 1. Rather than solving this as a linear system, power
+    iteration exploits the fact that repeatedly applying M to *any* starting
+    distribution converges to the dominant eigenvector, because eigenvalue 1
+    is the largest eigenvalue of a (damped, irreducible) transition matrix --
+    this is a direct consequence of the Perron-Frobenius theorem, which the
+    course gestures at when introducing Markov matrices.
+
+    `damping` mixes in a uniform "random surfer" term, guaranteeing the chain
+    is irreducible and aperiodic (so convergence is guaranteed regardless of
+    the raw link structure) -- this is the actual PageRank formulation.
+
+    Complexity: O(n^2 * iterations) -- one matrix-vector multiply per iteration.
+    """
+    n = link_matrix.shape[0]
+
+    # Column-normalize so each column is a probability distribution over
+    # where a random surfer on that page goes next.
+    col_sums = link_matrix.sum(axis=0)
+    col_sums[col_sums == 0] = 1  # avoid division by zero for dangling pages
+    M = link_matrix / col_sums
+
+    teleport = np.ones((n, n)) / n
+    google_matrix = damping * M + (1 - damping) * teleport
+
+    pi = np.ones(n) / n
+    for _ in range(iterations):
+        pi = google_matrix @ pi
+        pi = pi / pi.sum()  # renormalize (guards against numerical drift)
+
+    return pi
+
+
+# ---------------------------------------------------------------------------
+# 5. Self-verification against numpy.linalg (used ONLY as a ground-truth oracle)
+# ---------------------------------------------------------------------------
+
