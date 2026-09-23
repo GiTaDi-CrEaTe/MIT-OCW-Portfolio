@@ -1,5 +1,8 @@
-# Every script runs with the standard library plus NumPy alone.
-# No scikit-learn, no PyTorch, no TensorFlow, no SciPy -- every algorithm
-# in this repository (decompositions, eigensolvers, backpropagation, search)
-# is implemented from first principles, not called from a library.
+# Foundations Lab Dependencies
+# Core algorithms and experiments are built strictly from first principles
+# using NumPy and the Python standard library.
+# Matplotlib is used solely for rendering experimental diagnostic plots into artifacts/.
+# Pytest runs the automated verification suite.
 numpy>=1.24
+matplotlib>=3.7
+pytest>=7.0
