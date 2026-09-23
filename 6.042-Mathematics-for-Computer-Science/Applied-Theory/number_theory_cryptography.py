@@ -91,3 +91,26 @@ def mod_inverse(a: int, m: int) -> int:
 #    makes RSA feasible at all.
 # ---------------------------------------------------------------------------
 
+def mod_pow(base: int, exponent: int, modulus: int) -> int:
+    """
+    Computes (base ** exponent) % modulus without ever materializing the
+    (astronomically large) unreduced power. Standard binary/repeated-squaring
+    exponentiation: write the exponent in binary and square-and-multiply.
+    """
+    if modulus == 1:
+        return 0
+    result = 1
+    base = base % modulus
+    while exponent > 0:
+        if exponent & 1:  # current bit is 1 -> fold this power of base in
+            result = (result * base) % modulus
+        exponent >>= 1
+        base = (base * base) % modulus
+    return result
+
+
+# ---------------------------------------------------------------------------
+# 3. Miller-Rabin primality test  --  a randomized algorithm built directly on
+#    Fermat's Little Theorem, strengthened to rule out Fermat pseudoprimes.
+# ---------------------------------------------------------------------------
+
