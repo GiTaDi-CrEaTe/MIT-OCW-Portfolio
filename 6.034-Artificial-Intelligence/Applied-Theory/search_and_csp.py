@@ -229,3 +229,68 @@ def backtracking_naive(variables, domains, constraints, assignment=None, counter
     return None, counter[0]
 
 
+def backtracking_forward_checking(variables, domains, constraints,
+                                   assignment=None, local_domains=None, counter=None):
+    """
+    Backtracking with forward checking: whenever a variable is assigned,
+    immediately REMOVE the assigned value from the domains of all its
+    not-yet-assigned neighbors. If any neighbor's domain becomes empty, this
+    branch is guaranteed to fail (no legal value remains for that neighbor)
+    and can be pruned immediately -- without waiting to assign that neighbor
+    and discover the failure later. This is strictly more informed than
+    naive backtracking, which only detects the same failure once it actually
+    tries (and fails) every value for that neighbor.
+    """
+    if assignment is None:
+        assignment = {}
+    if local_domains is None:
+        local_domains = {v: list(domains[v]) for v in variables}
+    if counter is None:
+        counter = [0]
+    counter[0] += 1
+
+    if len(assignment) == len(variables):
+        return dict(assignment), counter[0]
+
+    unassigned = [v for v in variables if v not in assignment]
+    var = unassigned[0]
+
+    for value in list(local_domains[var]):
+        assignment[var] = value
+
+        # Forward checking step: prune this value from neighbors' domains.
+        removed = []
+        domain_wipeout = False
+        for neighbor in constraints.get(var, []):
+            if neighbor not in assignment and value in local_domains[neighbor]:
+                local_domains[neighbor].remove(value)
+                removed.append(neighbor)
+                if not local_domains[neighbor]:
+                    domain_wipeout = True
+
+        if not domain_wipeout:
+            result, _ = backtracking_forward_checking(
+                variables, domains, constraints, assignment, local_domains, counter)
+            if result is not None:
+                return result, counter[0]
+
+        # Undo forward-checking pruning before trying the next value.
+        for neighbor in removed:
+            local_domains[neighbor].append(value)
+        del assignment[var]
+
+    return None, counter[0]
+
+
+def build_neighbor_constraints(edges):
+    constraints = {}
+    for u, v in edges:
+        constraints.setdefault(u, []).append(v)
+        constraints.setdefault(v, []).append(u)
+    return constraints
+
+
+# ===========================================================================
+# Self-verification
+# ===========================================================================
+
