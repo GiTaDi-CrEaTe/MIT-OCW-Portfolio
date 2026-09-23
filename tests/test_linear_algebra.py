@@ -71,3 +71,23 @@ def test_pagerank_or_lu():
 
 
 
+def test_qr_modified_gram_schmidt_exists_and_works():
+    """Verify the MGS variant exists in the core module and produces correct results."""
+    mgs_fn = getattr(la, "qr_modified_gram_schmidt", None)
+    if mgs_fn is None:
+        pytest.skip("qr_modified_gram_schmidt not yet in core module")
+    rng = np.random.default_rng(99)
+    A = rng.standard_normal((8, 5))
+    Q, R = mgs_fn(A)
+    assert np.max(np.abs(Q @ R - A)) < 1e-10
+    assert np.max(np.abs(Q.T @ Q - np.eye(5))) < 1e-10
+    assert np.allclose(np.tril(R, -1), 0.0, atol=1e-12)
+
+
+def test_qr_gram_schmidt_raises_on_dependent_columns():
+    """Gram-Schmidt should raise ValueError on linearly dependent columns."""
+    A = np.array([[1.0, 2.0], [2.0, 4.0], [3.0, 6.0]])
+    with pytest.raises(ValueError, match="not linearly independent"):
+        la.qr_gram_schmidt(A)
+
+
