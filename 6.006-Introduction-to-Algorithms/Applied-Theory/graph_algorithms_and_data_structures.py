@@ -235,3 +235,40 @@ class Graph:
                     stack.append(v)
         return order
 
+    def dijkstra(self, source):
+        """
+        Dijkstra's algorithm via a binary heap priority queue.
+        Correctness claim: when a node u is popped (finalized) from the heap,
+        dist[u] is already the true shortest-path distance from source.
+        Proof sketch (the "cut property"): suppose for contradiction some
+        finalized node u had an incorrect (too large) distance. Consider the
+        true shortest path from source to u; let y be the first node on that
+        path not yet finalized. Because all edge weights are non-negative,
+        dist[y] <= true_dist(u) < dist[u] as currently recorded -- but then y
+        should have been popped before u, contradicting the assumption that u
+        was popped first. This is exactly why Dijkstra REQUIRES non-negative
+        weights (Bellman-Ford, Pset 10, drops this requirement at the cost of
+        higher complexity).
+        """
+        dist = {source: 0}
+        finalized = set()
+        heap = [(0, source)]
+        while heap:
+            d_u, u = heapq.heappop(heap)
+            if u in finalized:
+                continue
+            finalized.add(u)
+            for v, w in self.adj.get(u, []):
+                if w < 0:
+                    raise ValueError("Dijkstra requires non-negative edge weights.")
+                new_dist = d_u + w
+                if v not in dist or new_dist < dist[v]:
+                    dist[v] = new_dist
+                    heapq.heappush(heap, (new_dist, v))
+        return dist
+
+
+# ===========================================================================
+# Self-verification
+# ===========================================================================
+
