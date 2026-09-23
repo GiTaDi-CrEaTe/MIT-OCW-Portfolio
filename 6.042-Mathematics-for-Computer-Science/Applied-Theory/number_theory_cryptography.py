@@ -221,3 +221,75 @@ def decode_text(number: int) -> str:
 #    against trial division on small numbers.
 # ---------------------------------------------------------------------------
 
+def _self_test():
+    print("=" * 70)
+    print("SELF-TEST 1: Miller-Rabin vs. trial-division ground truth (n < 5000)")
+    print("=" * 70)
+
+    def is_prime_trial_division(n):
+        if n < 2:
+            return False
+        for i in range(2, int(n ** 0.5) + 1):
+            if n % i == 0:
+                return False
+        return True
+
+    mismatches = 0
+    for n in range(2, 5000):
+        if is_probable_prime(n, rounds=10) != is_prime_trial_division(n):
+            mismatches += 1
+    print(f"Checked n = 2..4999. Mismatches against trial division: {mismatches}")
+    assert mismatches == 0, "Miller-Rabin disagreed with ground truth!"
+    print("PASSED: Miller-Rabin matches trial division on the full test range.\n")
+
+    print("=" * 70)
+    print("SELF-TEST 2: Extended Euclid produces a valid Bezout identity")
+    print("=" * 70)
+    for (a, b) in [(240, 46), (17, 5), (1000003, 99991), (48, 18)]:
+        g, x, y = extended_gcd(a, b)
+        assert a * x + b * y == g
+        assert g == gcd(a, b)
+        print(f"gcd({a}, {b}) = {g},  verified {a}*({x}) + {b}*({y}) = {g}")
+    print("PASSED: Bezout identity holds for every tested pair.\n")
+
+    print("=" * 70)
+    print("SELF-TEST 3: End-to-end RSA round trip on a real message")
+    print("=" * 70)
+    random.seed(6042)  # reproducibility for the portfolio reader
+    public_key, private_key = generate_rsa_keypair(bits=512)
+    n, e = public_key
+    print(f"Generated {n.bit_length()}-bit modulus n.")
+    print(f"Public key e  = {e}")
+
+    message = "MIT 6.042J: proof by induction, then proof by construction."
+    m_int = encode_text(message)
+    assert m_int < n, "Message too large for this modulus; shorten the message."
+
+    cipher = rsa_encrypt(m_int, public_key)
+    recovered_int = rsa_decrypt(cipher, private_key)
+    recovered_text = decode_text(recovered_int)
+
+    print(f"Plaintext:  {message!r}")
+    print(f"Ciphertext (int, truncated repr): {str(cipher)[:40]}...")
+    print(f"Decrypted: {recovered_text!r}")
+    assert recovered_text == message, "RSA round trip failed!"
+    print("PASSED: Decrypted text exactly matches the original plaintext.\n")
+
+    print("=" * 70)
+    print("SELF-TEST 4: Encrypting with the public key alone cannot be undone")
+    print("without the private exponent d (structural sanity check only  -- ")
+    print("this script does not attempt a factoring attack).")
+    print("=" * 70)
+    wrong_d = private_key[1] + 2  # a nearby, wrong private exponent
+    garbage = rsa_decrypt(cipher, (n, wrong_d))
+    print(f"Decryption with a wrong d yields nonsense integer (as expected): "
+          f"{garbage != m_int}")
+    assert garbage != m_int
+    print("PASSED: correctness of RSA depends critically on the exact d.\n")
+
+    print("All self-tests passed. RSA implementation is verified against")
+    print("ground truth and demonstrates a full theory-to-execution pipeline.")
+
+
+if __name__ == "__main__":
+    _self_test()
