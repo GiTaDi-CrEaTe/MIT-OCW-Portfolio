@@ -167,3 +167,71 @@ class NeuralNetwork:
         return (a_L > 0.5).astype(int)
 
     # -- parameter (de)serialization, used by the gradient checker below --
+    def get_flat_params(self):
+        return np.concatenate([w.flatten() for w in self.W] + [b.flatten() for b in self.b])
+
+    def set_flat_params(self, flat):
+        idx = 0
+        for l in range(self.L):
+            size = self.W[l].size
+            self.W[l] = flat[idx:idx + size].reshape(self.W[l].shape)
+            idx += size
+        for l in range(self.L):
+            size = self.b[l].size
+            self.b[l] = flat[idx:idx + size].reshape(self.b[l].shape)
+            idx += size
+
+
+# ---------------------------------------------------------------------------
+# Numerical gradient checking (Pset 8's standard backprop-debugging technique)
+# ---------------------------------------------------------------------------
+
+def numerical_gradient_check(net: NeuralNetwork, X, y, epsilon=1e-5, num_checks=30):
+    """
+    For a handful of randomly chosen parameters, approximates dJ/dparam via
+    the symmetric finite-difference formula:
+        dJ/dparam ~= [J(param + eps) - J(param - eps)] / (2 * eps)
+    and compares it against the analytically computed backprop gradient.
+    This is the textbook way to verify a from-scratch backprop implementation
+    is actually correct, rather than merely "loss goes down" (which can be
+    true even with a subtly wrong gradient, e.g. if the sign is right but the
+    magnitude is off due to a chain-rule slip).
+    """
+    _, cache = net.forward(X)
+    grads_W, grads_b = net.backward(y, cache)
+    analytic_grad = np.concatenate([g.flatten() for g in grads_W] + [g.flatten() for g in grads_b])
+
+    flat_params = net.get_flat_params()
+    rng = np.random.default_rng(0)
+    check_indices = rng.choice(len(flat_params), size=min(num_checks, len(flat_params)), replace=False)
+
+    max_relative_error = 0.0
+    for idx in check_indices:
+        original = flat_params[idx]
+
+        flat_params[idx] = original + epsilon
+        net.set_flat_params(flat_params)
+        a_plus, _ = net.forward(X)
+        loss_plus = net.compute_loss(a_plus, y)
+
+        flat_params[idx] = original - epsilon
+        net.set_flat_params(flat_params)
+        a_minus, _ = net.forward(X)
+        loss_minus = net.compute_loss(a_minus, y)
+
+        flat_params[idx] = original  # restore
+        net.set_flat_params(flat_params)
+
+        numeric_grad = (loss_plus - loss_minus) / (2 * epsilon)
+        analytic = analytic_grad[idx]
+        rel_error = abs(numeric_grad - analytic) / max(abs(numeric_grad) + abs(analytic), 1e-8)
+        max_relative_error = max(max_relative_error, rel_error)
+
+    return max_relative_error
+
+
+# ---------------------------------------------------------------------------
+# Synthetic non-linearly-separable dataset ("two rings"): a task a single
+# linear layer (Pset 2/6) provably cannot solve, motivating hidden layers.
+# ---------------------------------------------------------------------------
+
