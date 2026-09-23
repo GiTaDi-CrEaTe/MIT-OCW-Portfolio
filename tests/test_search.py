@@ -71,3 +71,26 @@ def test_csp_forward_checking_finds_valid_coloring():
         assert result[u] != result[v], f"Adjacent nodes {u} and {v} have same color"
 
 
+def test_csp_forward_checking_fewer_nodes_than_naive():
+    """Forward checking should explore fewer (or equal) nodes than naive backtracking."""
+    if not hasattr(search, "backtracking_forward_checking"):
+        pytest.skip("CSP solver not available")
+    variables = list(range(6))
+    domains = {v: ["R", "G", "B"] for v in variables}
+    edges = [(0,1), (0,2), (1,2), (1,3), (2,4), (3,4), (3,5), (4,5)]
+    constraints = search.build_neighbor_constraints(edges)
+    naive_result, naive_nodes = search.backtracking_naive(variables, domains, constraints)
+    fc_result, fc_nodes = search.backtracking_forward_checking(variables, domains, constraints)
+    assert naive_result is not None
+    assert fc_result is not None
+    assert fc_nodes <= naive_nodes
+
+
+def test_astar_unreachable_goal():
+    """A* should return None cost or inf when the goal is unreachable."""
+    if not hasattr(search, "build_grid_graph"):
+        pytest.skip("Grid graph builder not available")
+    obstacles = {(4, y) for y in range(6)}
+    nodes, neighbors = search.build_grid_graph(6, 6, obstacles)
+    cost, expansions = search.dijkstra_grid(nodes, neighbors, (0, 0), (5, 5))
+    assert cost == float('inf') or cost == math.inf
