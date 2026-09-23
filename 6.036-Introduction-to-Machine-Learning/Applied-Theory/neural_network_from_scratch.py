@@ -67,3 +67,40 @@ ACTIVATIONS = {
 # The network itself
 # ---------------------------------------------------------------------------
 
+class NeuralNetwork:
+    """
+    A fully connected feedforward network for binary classification.
+    `layer_sizes` e.g. [2, 8, 8, 1] means: 2 inputs, two hidden layers of
+    8 units each (tanh activation), one sigmoid output unit.
+
+    Loss: binary cross-entropy,
+        J = -[ y*log(a_L) + (1-y)*log(1-a_L) ]
+    chosen (as in Pset 6) because it is the negative log-likelihood of a
+    Bernoulli model -- i.e. this loss IS maximum likelihood estimation,
+    not an arbitrary design choice.
+
+    A convenient identity used below: for a sigmoid output layer combined
+    with cross-entropy loss, dJ/dz_L simplifies exactly to (a_L - y),
+    with no leftover sigmoid-derivative term. This is a standard,
+    provable simplification (the two derivatives cancel algebraically)
+    and is used here explicitly rather than hidden inside a library.
+    """
+
+    def __init__(self, layer_sizes, hidden_activation="tanh", seed=36):
+        self.layer_sizes = layer_sizes
+        self.L = len(layer_sizes) - 1  # number of weight layers
+        self.hidden_act, self.hidden_act_prime = ACTIVATIONS[hidden_activation]
+
+        rng = np.random.default_rng(seed)
+        self.W = []
+        self.b = []
+        for l in range(self.L):
+            fan_in, fan_out = layer_sizes[l], layer_sizes[l + 1]
+            # Xavier-style initialization: keeps activations from
+            # saturating (all-zero or huge random initialization both
+            # break gradient flow, as noted in Pset 9's training-dynamics
+            # unit).
+            scale = np.sqrt(1.0 / fan_in)
+            self.W.append(rng.standard_normal((fan_out, fan_in)) * scale)
+            self.b.append(np.zeros((fan_out, 1)))
+
