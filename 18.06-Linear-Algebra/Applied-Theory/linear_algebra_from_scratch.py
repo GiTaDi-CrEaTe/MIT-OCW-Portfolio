@@ -137,3 +137,46 @@ def eig_qr_algorithm(A: np.ndarray, iterations: int = 500):
 # 3. Singular Value Decomposition from scratch, built on the eigensolver above
 # ---------------------------------------------------------------------------
 
+def svd_from_scratch(A: np.ndarray):
+    """
+    Computes A = U * Sigma * V^T from scratch.
+
+    Theory (Pset 12): A^T A is symmetric and positive semi-definite, so it has
+    real, non-negative eigenvalues and an orthonormal eigenbasis. Those
+    eigenvalues are the squared singular values of A, and the eigenvectors ARE
+    V. Once V and the singular values sigma_i are known, the corresponding
+    left singular vectors are recovered via u_i = (1/sigma_i) * A * v_i --
+    directly from the definition A v_i = sigma_i u_i.
+
+    Complexity: O(n^3 * iterations) for the eigensolver, plus O(mn) for U recovery.
+    """
+    A = A.astype(float)
+    m, n = A.shape
+
+    AtA = A.T @ A                                    # n x n, symmetric PSD
+    eigvals, V = eig_qr_algorithm(AtA, iterations=800)
+
+    # Eigenvalues of AtA can emerge with tiny numerical noise; clip and sort.
+    eigvals = np.clip(eigvals, 0, None)
+    order = np.argsort(eigvals)[::-1]
+    eigvals = eigvals[order]
+    V = V[:, order]
+
+    singular_values = np.sqrt(eigvals)
+
+    U = np.zeros((m, n))
+    for i in range(n):
+        if singular_values[i] > 1e-10:
+            U[:, i] = (A @ V[:, i]) / singular_values[i]
+        else:
+            U[:, i] = 0.0  # degenerate direction; contributes nothing to A
+
+    return U, singular_values, V.T
+
+
+# ---------------------------------------------------------------------------
+# 4. PageRank via power iteration  --  the steady-state eigenvector (eigenvalue 1)
+#    of a Markov transition matrix, computed WITHOUT ever building an
+#    eigensolver for the non-symmetric transition matrix directly.
+# ---------------------------------------------------------------------------
+
