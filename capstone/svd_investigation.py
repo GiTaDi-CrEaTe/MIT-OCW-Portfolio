@@ -1,6 +1,6 @@
 """
-Foundations Lab  --  Capstone Experiment 2: SVD via Normal Equations vs Direct Factorization
-========================================================================================
+Foundations Lab  --  Capstone Experiment 2: From-Scratch SVD via Normal Equations vs LAPACK Baseline
+====================================================================================================
 
 Research Question:
   Why does computing the SVD via the eigendecomposition of A^T A fail for
@@ -19,14 +19,16 @@ Mathematical Mechanism:
        In IEEE 754 float64 arithmetic, machine epsilon eps_mach ~= 2.22e-16.
        When kappa(A) >= 10^8, kappa(A^T A) >= 10^16 ~= 1 / eps_mach.
        Any singular value sigma_i < sqrt(eps_mach) * sigma_1 ~= 1.49e-8 * sigma_1
-       is completely swamped by roundoff error when A^T A is computed!
+       is completely swamped by roundoff error when A^T A is computed.
     3. Error Amplification in U:
        u_i = (1 / sigma_i) * A * v_i divides by sigma_i. When sigma_i is corrupted,
        the calculated u_i vector loses both normality and orthogonality.
 
-  In contrast, direct SVD algorithms (Golub-Kahan bidiagonalization or Jacobi rotations)
-  work directly on A without ever squaring its condition number, reliably recovering
-  singular values down to eps_mach * sigma_1.
+  In contrast, production direct SVD implementations (such as LAPACK's dgesdd,
+  which uses Golub-Kahan bidiagonalization with divide-and-conquer) work directly
+  on A without ever squaring its condition number, reliably recovering singular
+  values down to eps_mach * sigma_1. In our benchmark, we contrast our from-scratch
+  A^TA implementation against this trusted LAPACK baseline.
 """
 
 from typing import Dict, List, Tuple
@@ -39,7 +41,7 @@ def svd_via_ata(A: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     A = A.astype(np.float64)
     m, n = A.shape
-    AtA = A.T @ A  # Here condition number is squared: kappa(AtA) = kappa(A)^2
+    AtA = A.T @ A  # Condition number is squared: kappa(AtA) = kappa(A)^2
 
     # Compute eigenvalues and eigenvectors of symmetric matrix AtA
     eigvals, V = np.linalg.eigh(AtA)
@@ -69,7 +71,8 @@ def svd_via_ata(A: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 def run_svd_condition_experiment() -> Dict[str, List]:
     """
-    Evaluates SVD via A^T A against direct SVD across condition numbers from 10^1 to 10^12.
+    Evaluates from-scratch SVD via A^T A against the production LAPACK SVD baseline (dgesdd)
+    across condition numbers from 10^1 to 10^12.
     """
     cond_numbers = [10**p for p in range(1, 13)]
     results: Dict[str, List] = {
@@ -97,14 +100,14 @@ def run_svd_condition_experiment() -> Dict[str, List]:
         np.fill_diagonal(Sigma, s_true)
         A = U_true @ Sigma @ V_true.T
 
-        # Method 1: SVD via A^T A
+        # Method 1: From-scratch SVD via A^T A
         U_ata, s_ata, Vt_ata = svd_via_ata(A)
         A_recon_ata = U_ata @ np.diag(s_ata) @ Vt_ata
         ata_recon_err = np.linalg.norm(A - A_recon_ata, 2) / np.linalg.norm(A, 2)
         ata_u_ortho = np.linalg.norm(U_ata.T @ U_ata - np.eye(n), 2)
         ata_sv_err = abs(s_ata[-1] - s_true[-1]) / s_true[-1]
 
-        # Method 2: Direct SVD (LAPACK dgesdd)
+        # Method 2: Trusted production LAPACK SVD baseline (dgesdd)
         U_dir, s_dir, Vt_dir = np.linalg.svd(A, full_matrices=False)
         A_recon_dir = U_dir @ np.diag(s_dir) @ Vt_dir
         dir_recon_err = np.linalg.norm(A - A_recon_dir, 2) / np.linalg.norm(A, 2)
@@ -125,13 +128,13 @@ def run_svd_condition_experiment() -> Dict[str, List]:
 
 
 if __name__ == "__main__":
-    print("=" * 78)
-    print("EXPERIMENT 2: SVD via A^T A Normal Equations vs Direct Bidiagonalization SVD")
-    print("=" * 78)
+    print("=" * 82)
+    print("EXPERIMENT 2: From-Scratch SVD via A^T A Normal Equations vs LAPACK SVD Baseline")
+    print("=" * 82)
     res = run_svd_condition_experiment()
 
-    print(f"{'kappa(A)':>10} | {'True sigma_min':>15} | {'A^TA sigma_min':>15} | {'A^TA Rel Err':>13} | {'Direct Rel Err':>14}")
-    print("-" * 78)
+    print(f"{'kappa(A)':>10} | {'True sigma_min':>15} | {'A^TA sigma_min':>15} | {'A^TA Rel Err':>13} | {'LAPACK Rel Err':>14}")
+    print("-" * 82)
     for i in range(len(res["cond_numbers"])):
         c = res["cond_numbers"][i]
         s_true = res["true_smallest_sv"][i]
@@ -140,8 +143,7 @@ if __name__ == "__main__":
         err_dir = res["direct_sv_rel_error"][i]
         print(f"{c:10.1e} | {s_true:15.6e} | {s_ata:15.6e} | {err_ata:13.4e} | {err_dir:14.4e}")
 
-    print("\n" + "=" * 78)
+    print("\n" + "=" * 82)
     print("Finding: Beyond kappa(A) = 10^8, A^TA squares condition number past 1/eps_mach,")
     print("completely wiping out the smallest singular values.")
-    print("=" * 78)
-
+    print("=" * 82)
