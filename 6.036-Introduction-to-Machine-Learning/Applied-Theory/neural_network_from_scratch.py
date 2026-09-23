@@ -104,3 +104,21 @@ class NeuralNetwork:
             self.W.append(rng.standard_normal((fan_out, fan_in)) * scale)
             self.b.append(np.zeros((fan_out, 1)))
 
+    def forward(self, X):
+        """
+        X: shape (n_features, n_examples).
+        Returns final activation a_L and caches every z[l], a[l] needed
+        for the backward pass.
+        """
+        a = X
+        cache = {"a0": a}
+        for l in range(self.L):
+            z = self.W[l] @ a + self.b[l]
+            if l < self.L - 1:
+                a = self.hidden_act(z)
+            else:
+                a = sigmoid(z)  # output layer always sigmoid for binary classification
+            cache[f"z{l+1}"] = z
+            cache[f"a{l+1}"] = a
+        return a, cache
+
