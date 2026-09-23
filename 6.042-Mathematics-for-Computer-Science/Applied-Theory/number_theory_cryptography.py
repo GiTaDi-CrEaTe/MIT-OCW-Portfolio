@@ -157,3 +157,16 @@ def is_probable_prime(n: int, rounds: int = 40) -> bool:
     return True
 
 
+def generate_prime(bits: int) -> int:
+    """Generates a random odd bits-bit number and tests it with Miller-Rabin
+    until a probable prime is found."""
+    while True:
+        candidate = random.getrandbits(bits) | (1 << (bits - 1)) | 1  # force top and bottom bit
+        if is_probable_prime(candidate):
+            return candidate
+
+
+# ---------------------------------------------------------------------------
+# 4. RSA key generation, encryption, decryption
+# ---------------------------------------------------------------------------
+
