@@ -235,3 +235,22 @@ def numerical_gradient_check(net: NeuralNetwork, X, y, epsilon=1e-5, num_checks=
 # linear layer (Pset 2/6) provably cannot solve, motivating hidden layers.
 # ---------------------------------------------------------------------------
 
+def make_two_rings(n_per_class=200, seed=36):
+    rng = np.random.default_rng(seed)
+    theta_inner = rng.uniform(0, 2 * np.pi, n_per_class)
+    r_inner = rng.normal(1.0, 0.15, n_per_class)
+    inner = np.stack([r_inner * np.cos(theta_inner), r_inner * np.sin(theta_inner)])
+
+    theta_outer = rng.uniform(0, 2 * np.pi, n_per_class)
+    r_outer = rng.normal(2.5, 0.15, n_per_class)
+    outer = np.stack([r_outer * np.cos(theta_outer), r_outer * np.sin(theta_outer)])
+
+    X = np.concatenate([inner, outer], axis=1)  # shape (2, 2*n_per_class)
+    y = np.concatenate([np.zeros(n_per_class), np.ones(n_per_class)]).reshape(1, -1)
+    return X, y
+
+
+# ---------------------------------------------------------------------------
+# Self-verification
+# ---------------------------------------------------------------------------
+
