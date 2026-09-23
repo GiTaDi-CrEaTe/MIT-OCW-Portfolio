@@ -120,3 +120,61 @@ def avl_inorder(node, out):
         avl_inorder(node.right, out)
 
 
+class UnbalancedBST:
+    """Naive BST with no rebalancing -- used only as a comparison baseline
+    to make the AVL height guarantee visible, not as recommended practice."""
+
+    class Node:
+        __slots__ = ("key", "left", "right")
+
+        def __init__(self, key):
+            self.key = key
+            self.left = None
+            self.right = None
+
+    def __init__(self):
+        self.root = None
+
+    def insert(self, key):
+        if self.root is None:
+            self.root = self.Node(key)
+            return
+        node = self.root
+        while True:
+            if key < node.key:
+                if node.left is None:
+                    node.left = self.Node(key)
+                    return
+                node = node.left
+            elif key > node.key:
+                if node.right is None:
+                    node.right = self.Node(key)
+                    return
+                node = node.right
+            else:
+                return
+
+    def height(self):
+        """Iterative height computation -- deliberately non-recursive, since
+        the whole point of this baseline is that it degenerates to a
+        linked-list shape on sorted input, and a recursive traversal would
+        blow the Python call stack exactly because the tree is that
+        pathologically unbalanced."""
+        if self.root is None:
+            return 0
+        max_depth = 0
+        stack = [(self.root, 1)]
+        while stack:
+            node, depth = stack.pop()
+            max_depth = max(max_depth, depth)
+            if node.left:
+                stack.append((node.left, depth + 1))
+            if node.right:
+                stack.append((node.right, depth + 1))
+        return max_depth
+
+
+# ===========================================================================
+# PART 2  --  Graph algorithms (Pset 7-9): BFS, DFS, Dijkstra
+# ===========================================================================
+
