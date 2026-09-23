@@ -27,7 +27,9 @@ def test_capstone_cgs_vs_mgs_loss_of_orthogonality():
 
 
 def test_capstone_svd_squaring_breakdown():
-    # Matrix with condition number 10^9
+    # Matrix with condition number 10^9: sigma_min = 1e-9
+    # In A^T A, sigma_min^2 = 1e-18 < eps_mach (2.22e-16).
+    # Forming A^T A wipes out or corrupts the smallest singular value.
     m, n = 15, 8
     rng = np.random.default_rng(42)
     U, _ = np.linalg.qr(rng.standard_normal((m, m)))
@@ -38,8 +40,17 @@ def test_capstone_svd_squaring_breakdown():
     A = U @ Sigma @ V.T
 
     _, s_ata, _ = svd_via_ata(A)
-    # The smallest singular value is 1e-9; in A^TA its square is 1e-18 < eps_mach, so it must be 0
-    assert s_ata[-1] == 0.0
+    s_dir = np.linalg.svd(A, compute_uv=False)
+
+    rel_err_ata = abs(s_ata[-1] - s[-1]) / s[-1]
+    rel_err_dir = abs(s_dir[-1] - s[-1]) / s[-1]
+
+    # SVD via A^T A completely breaks down on the smallest singular value
+    assert rel_err_ata > 0.5  # Swamped by roundoff error (clamped to 0 or heavily corrupted)
+    # Direct SVD (bidiagonalization) recovers it reliably
+    assert rel_err_dir < 1e-5
+    # The normal equations error is orders of magnitude worse than direct SVD
+    assert rel_err_ata > 1e3 * rel_err_dir
 
 
 def test_capstone_astar_optimality():
