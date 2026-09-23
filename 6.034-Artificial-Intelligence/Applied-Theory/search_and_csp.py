@@ -201,3 +201,31 @@ def build_random_game_tree(depth, branching, rng):
 # (Pset 6-7)
 # ===========================================================================
 
+def backtracking_naive(variables, domains, constraints, assignment=None, counter=None):
+    """Chronological backtracking with NO propagation: assign a value,
+    recurse, and only check consistency of the CURRENT variable against
+    already-assigned neighbors."""
+    if assignment is None:
+        assignment = {}
+    if counter is None:
+        counter = [0]
+    counter[0] += 1
+
+    if len(assignment) == len(variables):
+        return dict(assignment), counter[0]
+
+    unassigned = [v for v in variables if v not in assignment]
+    var = unassigned[0]
+
+    for value in domains[var]:
+        if all(other not in assignment or assignment[other] != value
+               for other in constraints.get(var, [])):
+            assignment[var] = value
+            result, _ = backtracking_naive(variables, domains, constraints, assignment, counter)
+            if result is not None:
+                return result, counter[0]
+            del assignment[var]
+
+    return None, counter[0]
+
+
