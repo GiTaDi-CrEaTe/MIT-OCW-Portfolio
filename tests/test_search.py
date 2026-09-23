@@ -57,3 +57,17 @@ def test_minimax_and_alphabeta_equivalence():
 
 
 
+def test_csp_forward_checking_finds_valid_coloring():
+    """Forward-checking CSP should find a valid graph coloring on a known-solvable graph."""
+    if not hasattr(search, "backtracking_forward_checking"):
+        pytest.skip("CSP solver not available")
+    variables = [0, 1, 2]
+    domains = {v: ["R", "G", "B"] for v in variables}
+    edges = [(0, 1), (1, 2), (0, 2)]
+    constraints = search.build_neighbor_constraints(edges)
+    result, nodes = search.backtracking_forward_checking(variables, domains, constraints)
+    assert result is not None, "Should find a valid 3-coloring of a triangle"
+    for u, v in edges:
+        assert result[u] != result[v], f"Adjacent nodes {u} and {v} have same color"
+
+
