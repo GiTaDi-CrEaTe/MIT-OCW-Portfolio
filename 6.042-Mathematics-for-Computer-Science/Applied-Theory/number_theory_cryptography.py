@@ -114,3 +114,46 @@ def mod_pow(base: int, exponent: int, modulus: int) -> int:
 #    Fermat's Little Theorem, strengthened to rule out Fermat pseudoprimes.
 # ---------------------------------------------------------------------------
 
+def is_probable_prime(n: int, rounds: int = 40) -> bool:
+    """
+    Miller-Rabin primality test.
+
+    Theory: write n - 1 = 2^r * d with d odd. If n is prime, then for any
+    witness a in [2, n-2], the sequence
+        a^d, a^(2d), a^(4d), ..., a^((2^(r-1))d)   (mod n)
+    must either start at 1, or hit -1 (mod n) at some point before reaching
+    a^(n-1). This follows because Z/nZ is a field when n is prime, so x^2 = 1
+    has only the roots x = 1 and x = -1 -- there can be no other square root
+    of unity. A composite n will fail this for at least 3/4 of possible
+    witnesses a, so repeating with independent random witnesses drives the
+    false-positive probability down to at most 4^(-rounds).
+    """
+    if n < 2:
+        return False
+    for small_prime in (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37):
+        if n == small_prime:
+            return True
+        if n % small_prime == 0:
+            return False
+
+    r, d = 0, n - 1
+    while d % 2 == 0:
+        r += 1
+        d //= 2
+
+    for _ in range(rounds):
+        a = random.randrange(2, n - 1)
+        x = mod_pow(a, d, n)
+        if x == 1 or x == n - 1:
+            continue  # this witness is consistent with primality
+        composite = True
+        for _ in range(r - 1):
+            x = (x * x) % n
+            if x == n - 1:
+                composite = False
+                break
+        if composite:
+            return False
+    return True
+
+
