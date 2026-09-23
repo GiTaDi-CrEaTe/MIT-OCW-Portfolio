@@ -82,3 +82,21 @@ def mle_bernoulli(data_sequence) -> float:
 # distribution (Pset 11)
 # ===========================================================================
 
+def simulate_markov_chain(transition_matrix: np.ndarray, start_state: int,
+                           n_steps: int, rng: random.Random):
+    """
+    Simulates a discrete-time Markov chain for n_steps and returns the
+    empirical visitation frequency of each state -- the "run it and count"
+    approach.
+    transition_matrix[i, j] = P(next state = j | current state = i).
+    """
+    n_states = transition_matrix.shape[0]
+    counts = np.zeros(n_states)
+    state = start_state
+    for _ in range(n_steps):
+        counts[state] += 1
+        probs = transition_matrix[state]
+        state = rng.choices(range(n_states), weights=probs, k=1)[0]
+    return counts / n_steps
+
+
