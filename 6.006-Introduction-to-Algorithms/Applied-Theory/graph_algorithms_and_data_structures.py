@@ -178,3 +178,40 @@ class UnbalancedBST:
 # PART 2  --  Graph algorithms (Pset 7-9): BFS, DFS, Dijkstra
 # ===========================================================================
 
+class Graph:
+    """Weighted, directed graph via adjacency list: {u: [(v, weight), ...]}."""
+
+    def __init__(self):
+        self.adj = {}
+
+    def add_node(self, u):
+        self.adj.setdefault(u, [])
+
+    def add_edge(self, u, v, weight=1):
+        self.add_node(u)
+        self.add_node(v)
+        self.adj[u].append((v, weight))
+
+    def bfs(self, source):
+        """
+        Breadth-first search. Correctness claim: BFS discovers nodes in
+        strictly non-decreasing order of their (unweighted) distance from
+        source. Proof sketch (induction on distance layer d): assume all
+        nodes at distance < d have already been correctly dequeued in
+        non-decreasing distance order; any node at distance d is adjacent to
+        some node at distance d-1, which by the inductive hypothesis was
+        already dequeued and had its neighbors enqueued -- so this node is
+        discovered no later than any node at distance d+1.
+        """
+        distance = {source: 0}
+        order = []
+        queue = deque([source])
+        while queue:
+            u = queue.popleft()
+            order.append(u)
+            for v, _w in self.adj.get(u, []):
+                if v not in distance:
+                    distance[v] = distance[u] + 1
+                    queue.append(v)
+        return order, distance
+
