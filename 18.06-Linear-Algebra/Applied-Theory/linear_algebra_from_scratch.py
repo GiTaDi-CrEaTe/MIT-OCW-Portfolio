@@ -60,3 +60,43 @@ def qr_gram_schmidt(A: np.ndarray):
     return Q, R
 
 
+def qr_modified_gram_schmidt(A: np.ndarray):
+    """
+    Modified Gram-Schmidt (MGS) QR factorization -- O(mn^2) operations.
+
+    Unlike Classical GS (above), which projects each new column against the
+    ORIGINAL columns of A, MGS updates the working vector sequentially after
+    each projection step. In exact arithmetic the two methods are identical;
+    in floating-point they differ dramatically:
+
+        CGS orthogonality error: O(kappa(A)^2 * eps_mach)
+        MGS orthogonality error: O(kappa(A)   * eps_mach)
+
+    This difference is documented experimentally in capstone/numerical_stability.py
+    and in the lab notebook (Log Entry 1).
+
+    Complexity: O(mn^2) where A is m x n.
+    """
+    A = A.astype(float)
+    m, n = A.shape
+    Q = np.zeros((m, n))
+    R = np.zeros((n, n))
+    V = A.copy()
+
+    for k in range(n):
+        R[k, k] = np.linalg.norm(V[:, k])
+        if R[k, k] < 1e-12:
+            raise ValueError("Columns are not linearly independent (or nearly so).")
+        Q[:, k] = V[:, k] / R[k, k]
+        for j in range(k + 1, n):
+            R[k, j] = Q[:, k] @ V[:, j]
+            V[:, j] = V[:, j] - R[k, j] * Q[:, k]
+
+    return Q, R
+
+
+# ---------------------------------------------------------------------------
+# 2. QR algorithm  --  iterative eigenvalue/eigenvector solver built on top of
+#    the Gram-Schmidt QR decomposition above.
+# ---------------------------------------------------------------------------
+
