@@ -133,3 +133,33 @@ def run_scipy_solver_challenge(n_range: Tuple[int, int] = (4, 15)) -> Dict:
             "dominant_mode": dominant_mode,
             "is_true_failure": is_true_failure,
             "naive_predicted_failure": bool(naive_cri < 0.5),
+            "revised_predicted_failure": bool(revised_cri < 0.5),
+            "warning_raised": warning_raised,
+            "warning_type": warning_type,
+            "warning_msg": warning_msg,
+            "exception_raised": exception_raised,
+            "exception_type": exception_type,
+        })
+
+    return {"records": records}
+
+
+def run_scipy_cholesky_challenge(n_range: Tuple[int, int] = (4, 15)) -> Dict:
+    """
+    Evaluates scipy.linalg.cholesky on Hilbert matrices and tests triangular solve.
+    """
+    records = []
+
+    for n in range(n_range[0], n_range[1] + 1):
+        H = scipy.linalg.hilbert(n)
+        cond = float(np.linalg.cond(H))
+        x_true = np.ones(n, dtype=np.float64)
+        b = H @ x_true
+
+        cholesky_succeeded = False
+        warning_raised = False
+        warning_type = "None"
+        warning_msg = ""
+        exception_raised = False
+        exception_type = "None"
+        recon_err = 0.0
