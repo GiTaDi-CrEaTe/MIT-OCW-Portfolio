@@ -118,7 +118,7 @@ MIT-OCW-Portfolio/
 | +-- README.md
 |
 |-- artifacts/         # 8 generated figures from capstone experiments
-|-- tests/             # pytest suite (55 tests covering all implementations)
+|-- tests/             # pytest suite (58 tests covering all implementations)
 |-- study_notes/       # Problem set notes and personal study logs
 |-- lab_notebook/      # Log of hardest failures and how I fixed them
 | +-- failures_and_fixes.md
@@ -154,7 +154,7 @@ Each file includes a section at the bottom explaining exactly which psets map to
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the full test suite (55 tests across all domains)
+# Run the full test suite (58 tests across all domains)
 pytest -v
 
 # Run all 8 capstone experiments and regenerate all figures in artifacts/
