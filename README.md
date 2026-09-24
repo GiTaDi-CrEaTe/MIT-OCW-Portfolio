@@ -128,3 +128,63 @@ MIT-OCW-Portfolio/
 | |-- cri.py                 # Mathematical formulation of multi-axis CRI
 | |-- cri_validation.py      # Holdout validation (Dataset A vs Dataset B)
 | |-- cri_external.py        # External library challenge (SciPy/LAPACK)
+| +-- README.md
+|
+|-- artifacts/         # 8 generated figures from capstone experiments
+|-- tests/             # pytest suite (55 tests covering all implementations)
+|-- study_notes/       # Problem set notes and personal study logs
+|-- lab_notebook/      # Log of hardest failures and how I fixed them
+| +-- failures_and_fixes.md
+|-- RESEARCH_REPORT.md # Concise 12-section research report
+|-- LIMITATIONS.md     # Honest accounting of what this code can't do
+|-- TIMELINE.md        # Eight-month research development timeline
+|-- PEER_REVIEW.md     # Peer review log, self-critiques, and empirical results
+|-- DEMO.md            # 90-second walkthrough of numerical failure
+|-- requirements.txt
++-- .github/workflows/ci.yml    # CI across Python 3.11, 3.12, 3.13
+```
+
+---
+
+## Study Notes
+
+The `study_notes/` directory contains problem set notes for each course. These are my personal notes on what each pset covers, what techniques matter, and where the ideas connect to the implementations. They're organized by course:
+
+- [**18.06 Linear Algebra**](./study_notes/18.06-Linear-Algebra_pset_notes.md): 12 psets from solving $Ax = b$ through eigenvalues to the SVD. The notes trace how Psets 7, 9, 11, and 12 chain together into the Applied-Theory script.
+- [**6.042 Discrete Math**](./study_notes/6.042-Mathematics-for-Computer-Science_pset_notes.md): 14 psets covering proofs, number theory, counting, and discrete probability. Psets 5-6 (Euclidean algorithm, Fermat's Little Theorem) feed directly into the RSA implementation.
+- [**6.006 Algorithms**](./study_notes/6.006-Introduction-to-Algorithms_pset_notes.md): 12 psets from asymptotic notation through sorting, BSTs, graphs, and dynamic programming. The AVL tree (Pset 5) and Dijkstra (Pset 9) are implemented from scratch.
+- [**6.041 Probability**](./study_notes/6.041-Probabilistic-Systems-Analysis_pset_notes.md): 11 psets from axioms through random variables, Bayesian inference, and Markov chains. The Bayesian updater (Pset 7), MLE comparison (Pset 8), and Markov simulation (Pset 11) are all in the Applied-Theory script.
+- [**6.036 Machine Learning**](./study_notes/6.036-Introduction-to-Machine-Learning_pset_notes.md): 10 psets from linear regression and gradient descent through neural networks. Psets 7-8 (forward prop, backprop) are implemented in full with numerical gradient verification.
+- [**6.034 Artificial Intelligence**](./study_notes/6.034-Artificial-Intelligence_pset_notes.md): 8 psets covering search, adversarial games, and constraint satisfaction. A* (Pset 2), alpha-beta (Pset 5), and forward-checking CSP (Pset 7) are implemented and benchmarked.
+
+Each file includes a section at the bottom explaining exactly which psets map to which parts of the code.
+
+---
+
+## Running the Code
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the full test suite (55 tests across all domains)
+pytest -v
+
+# Run all 8 capstone experiments and regenerate all figures in artifacts/
+python3 capstone/run_experiments.py
+```
+
+CI runs automatically via [GitHub Actions](.github/workflows/ci.yml) on Python 3.11, 3.12, and 3.13.
+
+---
+
+## Failures, Limitations, and Honest Scope
+
+I'm listing these up front because I think knowing what went wrong matters as much as showing what works.
+
+- **[Lab Notebook: Failures and Fixes](./lab_notebook/failures_and_fixes.md):** The six hardest bugs I ran into during this project, with full mathematical diagnoses. Includes: the illusion of zero residual in CGS, condition number squaring in SVD, catastrophic cancellation in finite differences, Python recursion limits on degenerate BSTs, the A* open-space plateau, and Bayesian overconfidence under regime switching.
+
+- **[LIMITATIONS.md](./LIMITATIONS.md):** An honest list of what this code does not do and why. Textbook RSA vs. OAEP padding, Gram-Schmidt vs. Householder reflectors, unshifted QR vs. Francis QR, conjugate priors vs. MCMC, pure NumPy vs. GPU tensor libraries, grid A* vs. continuous motion planning. Each gap is explained with the mathematical reason, not just "this is left as future work."
+
+---
+
