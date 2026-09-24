@@ -468,3 +468,48 @@ def build_dataset_b() -> List[EvaluationSample]:
             )
         )
 
+    # -------------------------------------------------------------
+    # 5. Linear Systems: Pivoted vs Unpivoted Gaussian Elimination
+    # -------------------------------------------------------------
+    # Matrix with tiny pivot element: [[eps, 1], [1, 1]]
+    for eps_pivot in [1e-3, 1e-8, 1e-12, 1e-15, 1e-17]:
+        A_piv = np.array([[eps_pivot, 1.0], [1.0, 1.0]], dtype=np.float64)
+        b_piv = np.array([1.0, 2.0], dtype=np.float64)
+        x_exact = np.linalg.solve(A_piv, b_piv)
+
+        # Unpivoted Gaussian elimination
+        m21 = A_piv[1, 0] / A_piv[0, 0]
+        a22_mod = A_piv[1, 1] - m21 * A_piv[0, 1]
+        b2_mod = b_piv[1] - m21 * b_piv[0]
+
+        if abs(a22_mod) < 1e-18:
+            err_unpiv = 1.0
+        else:
+            x2 = b2_mod / a22_mod
+            x1 = (b_piv[0] - A_piv[0, 1] * x2) / A_piv[0, 0]
+            x_unpiv = np.array([x1, x2])
+            err_unpiv = float(np.linalg.norm(x_unpiv - x_exact) / np.linalg.norm(x_exact))
+
+        is_fail = bool(err_unpiv > 1e-3)
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    numerical_error=err_unpiv,
+                    assumption_violation=float(min(10.0, 1e-16 / max(eps_pivot, 1e-18))),
+                    stability_risk=float(min(1.0, 1e-16 / max(eps_pivot, 1e-18))),
+                    domain="gaussian_elimination",
+                ),
+                is_failure=is_fail,
+                domain="gaussian_elimination",
+                description=f"Unpivoted LU pivot_eps={eps_pivot:.0e}",
+            )
+        )
+
+    # -------------------------------------------------------------
+    # 6. Non-Stationary Markov Chain under Sudden Jump Shock
+    # -------------------------------------------------------------
+    for shock_magnitude in [0.0, 0.1, 0.3, 0.6, 0.9]:
+        # Stationary baseline vs sudden parameter jump
+        # Static estimator incurs error proportional to shock
+        static_err = float(shock_magnitude)
+        is_fail = bool(static_err > 0.15)
