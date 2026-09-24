@@ -268,3 +268,28 @@ def bootstrap_ci(
     f1s = []
 
     for _ in range(n_bootstraps):
+        indices = rng.choice(n, size=n, replace=True)
+        sample_true = y_true[indices]
+        sample_scores = y_scores[indices]
+
+        # Ensure both classes present in resample
+        if len(np.unique(sample_true)) < 2:
+            continue
+
+        metrics = compute_classification_metrics(sample_true, sample_scores)
+        aurocs.append(metrics["auroc"])
+        f1s.append(metrics["f1"])
+
+    if len(aurocs) == 0:
+        return {"auroc_ci": (0.0, 1.0), "f1_ci": (0.0, 1.0)}
+
+    lower_p = 100 * (alpha / 2.0)
+    upper_p = 100 * (1.0 - alpha / 2.0)
+
+    auroc_low, auroc_high = np.percentile(aurocs, [lower_p, upper_p])
+    f1_low, f1_high = np.percentile(f1s, [lower_p, upper_p])
+
+    return {
+        "auroc_ci": (float(auroc_low), float(auroc_high)),
+        "f1_ci": (float(f1_low), float(f1_high)),
+    }
