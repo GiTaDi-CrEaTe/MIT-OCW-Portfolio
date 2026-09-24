@@ -100,3 +100,39 @@ def compute_scalar_cri(error: float, crit_threshold: float) -> float:
 
 
 def compute_composite_cri(
+    components: ReliabilityComponents,
+    tolerances: CriticalTolerances,
+    aggregation: str = "weakest_link",
+    p_norm: float = 4.0,
+) -> Tuple[float, float, str]:
+    """
+    Evaluates the CRI across all four axes.
+
+    Args:
+        components: Measured reliability components.
+        tolerances: Domain or global critical tolerances.
+        aggregation: 'weakest_link' (max normalized ratio) or 'p_norm' (smooth soft-max).
+        p_norm: Order of norm if aggregation is 'p_norm'.
+
+    Returns:
+        (rho, z, dominant_mode)
+        rho: Reliability index in [0, 1].
+        z: Normalized composite stress score.
+        dominant_mode: The component name driving the highest risk.
+    """
+    ratios = {
+        "numerical_error": max(0.0, float(components.numerical_error)) / max(tolerances.numerical_tol, 1e-15),
+        "decision_error": max(0.0, float(components.decision_error)) / max(tolerances.decision_tol, 1e-15),
+        "assumption_violation": max(0.0, float(components.assumption_violation)) / max(tolerances.assumption_tol, 1e-15),
+        "stability_risk": max(0.0, float(components.stability_risk)) / max(tolerances.stability_tol, 1e-15),
+    }
+
+    dominant_mode = max(ratios, key=ratios.get)
+
+    if aggregation == "weakest_link":
+        z = float(max(ratios.values()))
+    elif aggregation == "p_norm":
+        vals = np.array(list(ratios.values()), dtype=np.float64)
+        z = float(np.sum(vals ** p_norm) ** (1.0 / p_norm))
+    else:
+        raise ValueError(f"Unknown aggregation method: {aggregation}")
