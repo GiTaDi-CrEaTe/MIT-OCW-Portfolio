@@ -358,3 +358,15 @@ def main():
     plot_fig7_cri_holdout(val_res, artifacts_dir)
 
     print("\n>>> Running Experiment 8: External Library Challenge (SciPy/LAPACK)...")
+    ext_res = run_external_challenge()
+    plot_fig8_cri_external(ext_res, artifacts_dir)
+
+    print("\n" + "=" * 80)
+    print("                     ALL EXPERIMENTS COMPLETED")
+    print(f"  Visual artifacts generated in: {artifacts_dir}")
+    print("=" * 80)
+
+
+if __name__ == "__main__":
+    main()
+
