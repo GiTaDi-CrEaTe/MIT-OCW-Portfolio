@@ -23,7 +23,7 @@ How the courses connect:
 
   3. Combinatorial Structures Driving Heuristic Search (6.006 -> 6.034):
      The adjacency-list graph representation and min-heap priority queue from 6.006
-     provide the computational chassis for 6.034's A* heuristic search and CSP solvers.
+     provide the foundational data structures for 6.034's A* heuristic search and CSP solvers.
 
   4. Maximum Likelihood & Linear Algebra Driving Deep Learning (6.041 + 18.06 -> 6.036):
      The cross-entropy loss in 6.036 is the negative log-likelihood of a Bernoulli model (6.041).
