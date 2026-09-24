@@ -328,3 +328,33 @@ def main():
 
     print("\n>>> Running Experiment 1: Gram-Schmidt Numerical Stability...")
     sweep1 = run_condition_number_sweep()
+    h_res = run_hilbert_experiment()
+    plot_fig1_gram_schmidt(sweep1, artifacts_dir)
+
+    print("\n>>> Running Experiment 2: From-Scratch SVD vs LAPACK Baseline...")
+    svd_res = run_svd_condition_experiment()
+    plot_fig2_svd(svd_res, artifacts_dir)
+
+    print("\n>>> Running Experiment 3: A* Search Efficiency across Density Fields...")
+    search_data = run_benchmark_sweep(grid_sizes=[30, 50], densities=[0.0, 0.1, 0.2, 0.25], trials_per_config=10)
+    plot_fig3_search(search_data, artifacts_dir)
+
+    print("\n>>> Running Experiment 4: Floating-Point Gradient Precision...")
+    grad_res = run_finite_difference_precision_sweep()
+    plot_fig4_gradient(grad_res, artifacts_dir)
+
+    print("\n>>> Running Experiment 5: Model Misspecification & Bayesian Updating...")
+    plot_fig5_misspecification(artifacts_dir)
+
+    print("\n>>> Running Experiment 6: Cross-Course Synthesis & Reliability Index...")
+    disc_res = verify_discrete_vs_continuous_precision()
+    markov_res = synthesize_eigensolver_and_markov_chain()
+    grad_cancel = synthesize_loss_and_gradient_cancellation()
+    cri_data = evaluate_computational_reliability_index()
+    plot_fig6_computational_reliability(cri_data, artifacts_dir)
+
+    print("\n>>> Running Experiment 7: CRI Holdout Validation (Dataset A vs Dataset B)...")
+    val_res = run_holdout_validation()
+    plot_fig7_cri_holdout(val_res, artifacts_dir)
+
+    print("\n>>> Running Experiment 8: External Library Challenge (SciPy/LAPACK)...")
