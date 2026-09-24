@@ -36,3 +36,30 @@ Scientific Progression:
 
 import os
 import sys
+import warnings
+from pathlib import Path
+from typing import Dict, List, Tuple
+import numpy as np
+import scipy.linalg
+
+# Ensure project root is in sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from capstone.cri import (
+    ReliabilityComponents,
+    CriticalTolerances,
+    compute_composite_cri,
+    compute_scalar_cri,
+    predict_failure,
+)
+
+
+def run_scipy_solver_challenge(n_range: Tuple[int, int] = (4, 15)) -> Dict:
+    """
+    Evaluates scipy.linalg.solve on Hilbert matrices across condition numbers.
+    Compares naive residual-based reliability against condition-aware CRI.
+    """
+    eps_mach = np.finfo(np.float64).eps
+    tolerances = CriticalTolerances(
