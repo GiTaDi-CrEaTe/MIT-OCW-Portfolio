@@ -358,3 +358,58 @@ def build_dataset_b() -> List[EvaluationSample]:
         V = np.vander(pts, N=n_pts)
         cond_v = float(np.linalg.cond(V))
 
+        # Householder QR implementation
+        m, n_cols = V.shape
+        Q_h = np.eye(m)
+        R_h = V.copy().astype(np.float64)
+        for k in range(min(m, n_cols)):
+            x = R_h[k:, k]
+            norm_x = np.linalg.norm(x)
+            if norm_x > 1e-15:
+                alpha = -np.sign(x[0]) * norm_x if x[0] != 0 else -norm_x
+                u = x.copy()
+                u[0] -= alpha
+                u_norm = np.linalg.norm(u)
+                if u_norm > 1e-15:
+                    v = u / u_norm
+                    R_h[k:, k:] -= 2.0 * np.outer(v, np.dot(v, R_h[k:, k:]))
+                    Q_h[:, k:] -= 2.0 * np.outer(Q_h[:, k:] @ v, v)
+
+        ortho_err = float(np.linalg.norm(Q_h.T @ Q_h - np.eye(m)))
+        # Householder maintains orthogonality even at high condition number!
+        is_fail = bool(ortho_err > 1e-2)
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    numerical_error=ortho_err,
+                    assumption_violation=float(cond_v / 1e16),
+                    stability_risk=float(min(1.0, cond_v / 1e18)),
+                    domain="householder_qr",
+                ),
+                is_failure=is_fail,
+                domain="householder_qr",
+                description=f"Householder Vandermonde n={n_pts} cond={cond_v:.1e}",
+            )
+        )
+
+    # -------------------------------------------------------------
+    # 3. 4th-Order Finite Difference vs Complex-Step Differentiation
+    # -------------------------------------------------------------
+    # Test function: f(x) = sin(x) * exp(x) at x0 = 1.5
+    x0 = 1.5
+    f_test = lambda x: np.sin(x) * np.exp(x)
+    f_prime_exact = np.cos(x0) * np.exp(x0) + np.sin(x0) * np.exp(x0)
+
+    for h in [1e-2, 1e-5, 1e-8, 1e-14, 1e-18]:
+        # 4th-order central difference: O(h^4) truncation, O(eps_mach / h) cancellation
+        fd4 = (-f_test(x0 + 2 * h) + 8 * f_test(x0 + h) - 8 * f_test(x0 - h) + f_test(x0 - 2 * h)) / (12 * h)
+        err_fd4 = float(abs(fd4 - f_prime_exact) / abs(f_prime_exact))
+        is_fail_fd4 = bool(err_fd4 > 1e-3)
+
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    numerical_error=err_fd4,
+                    assumption_violation=float(1.0 if h < 1e-10 else 0.0),
+                    stability_risk=float(min(1.0, 1e-16 / h)),
+                    domain="numerical_differentiation",
