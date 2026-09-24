@@ -573,3 +573,23 @@ def run_holdout_validation() -> Dict:
         "calibrated_tolerances": calibrated_tolerances,
         "dataset_a_count": len(dataset_a),
         "dataset_b_count": len(dataset_b),
+        "metrics": metrics,
+        "bootstrap_ci": ci_results,
+        "y_true": y_true_arr,
+        "y_scores": y_scores_arr,
+        "rhos": np.array(rhos_b),
+        "dominant_modes": dominant_modes_b,
+        "dataset_b_samples": dataset_b,
+    }
+
+
+if __name__ == "__main__":
+    print("=" * 80)
+    print("CRI HOLDOUT VALIDATION (Dataset A -> Calibrate, Dataset B -> Evaluate)")
+    print("=" * 80)
+
+    res = run_holdout_validation()
+    m = res["metrics"]
+    ci = res["bootstrap_ci"]
+    tol = res["calibrated_tolerances"]
+
