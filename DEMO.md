@@ -13,3 +13,16 @@ This is proven in every linear algebra textbook. The proof is correct.
 ```bash
 # Run the experiment
 python3 capstone/numerical_stability.py
+```
+
+The code implements Classical Gram-Schmidt from scratch (`capstone/numerical_stability.py`, lines 32-54). It follows the textbook algorithm exactly.
+
+On a well-conditioned matrix (condition number 10^4), it works perfectly:
+- Orthogonality error: $3.89 \times 10^{-12}$
+- Residual ||A - QR||: near machine epsilon
+
+## The Stress Test (0:30 -- 0:50)
+
+Now increase the condition number to 10^8 (still a perfectly valid matrix with linearly independent columns).
+
+Result:
