@@ -16,7 +16,7 @@ exponents exist because of Bezout's identity, produced by the Extended
 Euclidean Algorithm.
 
 ------------------------------------------------------------------------------
-THEORY RECAP (see Pset 5-6 in Psets/pset_roadmap.md)
+THEORY RECAP (see Pset 5-6 in study_notes/6.042-Mathematics-for-Computer-Science_pset_notes.md)
 ------------------------------------------------------------------------------
 1. Euclidean Algorithm: gcd(a, b) = gcd(b, a mod b), base case gcd(a, 0) = a.
 
