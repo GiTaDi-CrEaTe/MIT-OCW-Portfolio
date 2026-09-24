@@ -248,3 +248,83 @@ def plot_fig7_cri_holdout(val_res: dict, artifacts_dir: Path):
         mask = (y_scores >= bins[i]) & (y_scores < bins[i + 1])
         if np.sum(mask) > 0:
             pred_probs.append(float(np.mean(y_scores[mask])))
+            emp_probs.append(float(np.mean(y_true[mask])))
+
+    ax2.plot([0, 1], [0, 1], "k--", alpha=0.5, label="Perfect Calibration")
+    if pred_probs:
+        ax2.plot(
+            pred_probs,
+            emp_probs,
+            "s-",
+            color="purple",
+            lw=2,
+            markersize=8,
+            label=f"CRI Calibration (Brier = {m['brier_score']:.3f})",
+        )
+    ax2.set_xlabel("Predicted Failure Probability (1 - rho)", fontsize=11)
+    ax2.set_ylabel("Empirical Failure Frequency", fontsize=11)
+    ax2.set_title("(b) Probability Calibration on Unseen Domains", fontsize=12, fontweight="bold")
+    ax2.grid(True, ls=":", alpha=0.6)
+    ax2.legend(loc="upper left", fontsize=9)
+
+    plt.tight_layout()
+    out_path = artifacts_dir / "fig7_cri_holdout_validation.png"
+    plt.savefig(out_path, dpi=300)
+    plt.close()
+    print(f"  [Artifact] Saved: {out_path}")
+
+
+def plot_fig8_cri_external(ext_res: dict, artifacts_dir: Path):
+    records = ext_res["solve_challenge"]["records"]
+    conds = [r["cond"] for r in records]
+    fwd_errs = [r["forward_error"] for r in records]
+    resids = [r["residual_norm"] for r in records]
+    bounds = [r["forward_error_bound"] for r in records]
+    naive_cris = [r["naive_cri"] for r in records]
+    revised_cris = [r["revised_cri"] for r in records]
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
+
+    # Top: Forward Error vs Backward Residual
+    ax1.loglog(conds, fwd_errs, "r-o", lw=2, markersize=6, label=r"Actual Forward Error $\|\hat{x} - x^*\| / \|x^*\|$")
+    ax1.loglog(conds, resids, "b-s", lw=2, markersize=6, label=r"Backward Residual $\|b - A\hat{x}\| / \|b\|$")
+    ax1.loglog(conds, bounds, "k--", alpha=0.6, label=r"Perturbation Bound $\kappa(A) \epsilon_{mach}$")
+    ax1.axhline(1e-2, color="gray", linestyle=":", label="Failure Tolerance (1e-2)")
+    ax1.set_ylabel("Error / Residual Magnitude", fontsize=11)
+    ax1.set_title("Figure 8: External Library Challenge (SciPy/LAPACK Linear Solver Breakdown)", fontsize=12, fontweight="bold")
+    ax1.grid(True, which="both", ls=":", alpha=0.5)
+    ax1.legend(loc="upper left", fontsize=9)
+
+    # Bottom: Naive vs Revised CRI
+    ax2.semilogx(conds, naive_cris, "m--^", lw=2, markersize=6, label=f"Naive Residual-Only CRI (Accuracy: {ext_res['naive_accuracy']*100:.1f}%)")
+    ax2.semilogx(conds, revised_cris, "g-o", lw=2, markersize=6, label=f"Revised Stability-Aware CRI (Accuracy: {ext_res['revised_accuracy']*100:.1f}%)")
+    ax2.axhline(0.5, color="purple", linestyle="--", alpha=0.7, label=r"Transition Threshold ($\rho = 0.5$)")
+    ax2.set_xlabel(r"Condition Number $\kappa(A)$", fontsize=11)
+    ax2.set_ylabel(r"Reliability Index $\rho \in [0, 1]$", fontsize=11)
+    ax2.set_ylim(-0.05, 1.15)
+    ax2.grid(True, ls=":", alpha=0.6)
+    ax2.legend(loc="center left", fontsize=9)
+
+    plt.tight_layout()
+    out_path = artifacts_dir / "fig8_cri_external_validation.png"
+    plt.savefig(out_path, dpi=300)
+    plt.close()
+    print(f"  [Artifact] Saved: {out_path}")
+
+
+def main():
+    print("=" * 80)
+    print("      FOUNDATIONS LAB: WHEN GUARANTEES MEET REAL MACHINES")
+    print("               Complete Experimental Verification Suite")
+    print("=" * 80)
+    print("METADATA & ENVIRONMENT:")
+    print(f"  Python Version:     {sys.version.split()[0]}")
+    print(f"  NumPy Version:      {np.__version__}")
+    print(f"  Machine Epsilon:    {np.finfo(np.float64).eps:.2e}")
+    print("  RNG Master Seeds:   1806, 6042, 6006, 6041, 6036, 6034")
+    print("=" * 80)
+
+    artifacts_dir = ensure_artifacts_dir()
+
+    print("\n>>> Running Experiment 1: Gram-Schmidt Numerical Stability...")
+    sweep1 = run_condition_number_sweep()
