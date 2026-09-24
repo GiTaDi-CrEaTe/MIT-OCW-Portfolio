@@ -26,3 +26,17 @@ On a well-conditioned matrix (condition number 10^4), it works perfectly:
 Now increase the condition number to 10^8 (still a perfectly valid matrix with linearly independent columns).
 
 Result:
+- **Orthogonality error: 0.42** (the Q matrix is NOT orthogonal)
+- **Residual ||A - QR||: still near machine epsilon**
+
+The residual says the answer is correct. The orthogonality check says it is completely wrong.
+
+On a 10x10 Hilbert matrix (condition number ~10^13):
+- Orthogonality error: **3.01** (the columns have inner products exceeding 0.8)
+- The algorithm has silently produced garbage while passing its own quality check
+
+## The Diagnosis (0:50 -- 1:05)
+
+The failure mechanism is **catastrophic cancellation**.
+
+Classical Gram-Schmidt computes:
