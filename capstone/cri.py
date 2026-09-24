@@ -136,3 +136,41 @@ def compute_composite_cri(
         z = float(np.sum(vals ** p_norm) ** (1.0 / p_norm))
     else:
         raise ValueError(f"Unknown aggregation method: {aggregation}")
+
+    if np.isnan(z) or np.isinf(z):
+        z = 1e12
+    z = max(0.0, z)
+    rho = float(1.0 / (1.0 + z ** 2))
+    return rho, z, dominant_mode
+
+
+def predict_failure(rho: float, threshold: float = 0.5) -> bool:
+    """
+    Predicts computational failure if CRI drops below transition threshold.
+    Default threshold is 0.5 (corresponding to z = 1.0).
+    """
+    return bool(rho < threshold)
+
+
+def compute_classification_metrics(
+    y_true: np.ndarray,
+    y_scores: np.ndarray,
+    threshold: float = 0.5,
+) -> Dict[str, float]:
+    """
+    Computes statistical classification metrics:
+    AUROC, F1, Precision, Recall, FPR, Brier calibration score.
+
+    Args:
+        y_true: Binary ground truth array (1 = failure, 0 = reliable).
+        y_scores: Risk score array where HIGHER values indicate higher failure probability.
+                  For CRI, risk_score = 1 - rho, or failure predicted if (1 - rho) >= 0.5.
+        threshold: Decision threshold for risk score (default 0.5).
+
+    Returns:
+        Dict of computed metrics.
+    """
+    y_true = np.asarray(y_true, dtype=int)
+    y_scores = np.asarray(y_scores, dtype=np.float64)
+
+    if len(y_true) == 0:
