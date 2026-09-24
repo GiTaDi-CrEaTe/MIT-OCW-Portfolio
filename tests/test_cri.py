@@ -98,3 +98,28 @@ def test_classification_metrics_and_auroc():
 
     # Test imperfect classification
     y_scores_imperfect = np.array([0.1, 0.6, 0.2, 0.4, 0.8, 0.9])
+    m_imp = compute_classification_metrics(y_true, y_scores_imperfect, threshold=0.5)
+    assert 0.5 < m_imp["auroc"] < 1.0
+    assert 0.0 < m_imp["f1"] < 1.0
+    assert m_imp["fp"] == 1
+    assert m_imp["fn"] == 1
+
+
+def test_bootstrap_confidence_intervals():
+    y_true = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+    y_scores = np.array([0.1, 0.2, 0.3, 0.4, 0.7, 0.8, 0.85, 0.95])
+
+    ci = bootstrap_ci(y_true, y_scores, n_bootstraps=200, seed=42)
+    assert "auroc_ci" in ci
+    assert "f1_ci" in ci
+
+    auroc_low, auroc_high = ci["auroc_ci"]
+    f1_low, f1_high = ci["f1_ci"]
+
+    assert 0.0 <= auroc_low <= auroc_high <= 1.0
+    assert 0.0 <= f1_low <= f1_high <= 1.0
+    assert auroc_high >= 0.95
+
+
+def test_holdout_validation_pipeline():
+    dataset_a = build_dataset_a()
