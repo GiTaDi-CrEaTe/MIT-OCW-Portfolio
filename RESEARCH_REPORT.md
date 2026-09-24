@@ -133,3 +133,23 @@ The high AUROC and low Brier score demonstrate that the four-axis decomposition 
 I tested the revised CRI against external production software that I did not build: SciPy 1.16 and LAPACK.
 
 - **Hypothesis:** Production solvers and residual norms provide sufficient protection against numerical unreliability.
+- **Falsification:** On Hilbert matrices of order $n \ge 12$, `scipy.linalg.solve` delivered corrupted outputs (forward error $9.7\%$ to $1580\%$) while reporting backward residuals near machine epsilon ($10^{-16}$). A naive residual-based CRI predicted that all solutions were safe, achieving only 58.3% accuracy.
+- **Revision:** Incorporating condition-based stability risk into the CRI vector enabled CRI to cross the transition threshold ($\rho < 0.5$) at $n=11$ ($\kappa = 5.2 \times 10^{14}$), achieving 100.0% accuracy in detecting forward solution breakdown.
+
+---
+
+## 11. Conclusion
+
+Theoretical guarantees in mathematics do not translate automatically to physical computing. However, machine failure is neither random nor inexplicable. Across linear algebra, search, optimization, probability, and discrete structures, computational breakdown concentrates along sharp, quantifiable phase boundaries.
+
+The Computational Reliability Index demonstrates that computational reliability can be systematically modeled as a function of numerical deviation, decision risk, assumption validity, and stability margin. Understanding these boundaries enables engineers and scientists to distinguish true algorithmic solutions from silent numerical failures.
+
+---
+
+## 12. Reproducibility
+
+The entire experimental pipeline is deterministic and reproducible via automated scripts:
+
+```bash
+# Clone and enter repository
+git clone https://github.com/GiTaDi-CrEaTe/MIT-OCW-Portfolio.git
