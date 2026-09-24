@@ -128,3 +128,48 @@ def build_dataset_a() -> List[EvaluationSample]:
     # 3. Machine Learning: Gradient Precision
     # Central difference precision sweep: U-curve
     for eps in [1e-15, 1e-12, 1e-8, 1e-5, 1e-2]:
+        # Cancellation error ~ eps_mach / eps, truncation error ~ eps^2
+        rel_grad_err = float(1e-16 / eps + 0.1 * (eps ** 2))
+        grad_fail = bool(rel_grad_err > 1e-3)
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    numerical_error=rel_grad_err,
+                    assumption_violation=float(1.0 if eps < 1e-10 else 0.0),
+                    stability_risk=float(min(1.0, 1e-16 / eps)),
+                    domain="gradient_precision",
+                ),
+                is_failure=grad_fail,
+                domain="gradient_precision",
+                description=f"Gradient check eps={eps:.0e}",
+            )
+        )
+
+    # 4. Probability: Bayesian Updating
+    # Static model on shifting data fails; adaptive model succeeds
+    samples.append(
+        EvaluationSample(
+            components=ReliabilityComponents(
+                numerical_error=0.02,
+                decision_error=0.01,
+                assumption_violation=0.0,
+                stability_risk=0.05,
+                domain="bayesian_inference",
+            ),
+            is_failure=False,
+            domain="bayesian_inference",
+            description="Adaptive Bayes on stationary data",
+        )
+    )
+    samples.append(
+        EvaluationSample(
+            components=ReliabilityComponents(
+                numerical_error=0.04,
+                decision_error=0.03,
+                assumption_violation=0.2,
+                stability_risk=0.10,
+                domain="bayesian_inference",
+            ),
+            is_failure=False,
+            domain="bayesian_inference",
+            description="Adaptive Bayes under regime drift",
