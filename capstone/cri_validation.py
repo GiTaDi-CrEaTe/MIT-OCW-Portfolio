@@ -537,6 +537,7 @@ def run_holdout_validation() -> Dict[str, Any]:
       2. Freezes tolerances.
       3. Evaluates predictions on held-out Dataset B.
       4. Computes metrics: AUROC, F1, precision, recall, FPR, Brier score, and bootstrap CIs.
+    Uses explicit numpy RNG master seeds to ensure numerical reproducibility across environments.
     """
     dataset_a = build_dataset_a()
     calibrated_tolerances = calibrate_cri_tolerances(dataset_a)
