@@ -24,4 +24,4 @@ How do structural invariants protect algorithms from worst-case degeneration, an
 - **Asymptotic Linear Scaling:** Empirical wall-clock times for sparse graph BFS ($E \approx 4V$) scaled strictly linearly with $V$, consistent with theoretical $O(V + E)$ bounds.
 
 ### Capstone & Cross-Course Connection
-The graph representations and min-heap priority queue implemented here provide the foundational computational chassis for 6.034's A* heuristic search and CSP constraint networks, and are evaluated under obstacle fields in [Capstone Experiment 3](../capstone/README.md#experiment-3--a-heuristic-search-scaling--optimality-limits).
+The graph representations and min-heap priority queue implemented here provide the foundational data structures for 6.034's A* heuristic search and CSP constraint networks, and are evaluated under obstacle fields in [Capstone Experiment 3](../capstone/README.md#experiment-3--a-heuristic-search-scaling--optimality-limits).
