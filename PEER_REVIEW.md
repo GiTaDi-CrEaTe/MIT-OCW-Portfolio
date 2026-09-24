@@ -30,3 +30,19 @@ Each review is documented as:
 
 **Result:** On held-out Dataset B, the calibrated CRI achieved an AUROC of 0.9494, an F1 score of 0.8966, Precision of 0.8667, Recall of 0.9286, and an FPR of 0.0833. The Brier score was 0.0666.
 
+**What Changed:** Thresholds are no longer tuned post-hoc. They are calibrated on Dataset A and frozen before evaluating generalization on Dataset B.
+
+## Self-Critique #2: Domain Independence Assumption
+
+**Concern:** CRI claims to be a "domain-independent" reliability model, but it uses domain-calibrated thresholds. If each domain needs its own threshold, is CRI really unified, or is it six separate metrics with the same formula?
+
+**My Response:** This is a fair criticism. The formula is the same, but the calibration is domain-specific. A truly domain-independent metric would need a universal threshold, which may not exist across completely different physical scales. The honest answer is that CRI unifies the *shape* of the reliability curve (the transition from safe to catastrophic) and provides a common multi-axis decomposition, but not a single universal scale.
+
+**Experiment Added:** Evaluated a composite multi-axis state vector: $x = (e_{\text{num}}, e_{\text{dec}}, v_{\text{assump}}, r_{\text{stab}})$.
+
+**Result:** Normalizing each axis against calibrated limits enables a common weakest-link aggregation ($z = \max_k (x_k / \tau_k)$) with a consistent transition point at $\rho = 0.5$.
+
+**What Changed:** I now describe CRI as a "domain-independent reliability model with calibrated domain tolerances" rather than a single universal constant.
+
+## Self-Critique #3: Sample Size in Holdout Validation
+
