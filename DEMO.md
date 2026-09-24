@@ -68,3 +68,6 @@ pytest -v
 
 ---
 *Independent study by Adityajyoti Kar (GiTaDi-CrEaTe). Based on publicly available MIT OpenCourseWare materials. Not affiliated with or endorsed by MIT.*
+
+### Continuous Integration Matrix
+The test suite runs automatically on Python 3.11, 3.12, and 3.13 on every commit to verify consistency across distinct interpreter versions and BLAS backends.
