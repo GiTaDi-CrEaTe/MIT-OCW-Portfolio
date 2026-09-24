@@ -152,7 +152,8 @@ def test_holdout_validation_pipeline():
 
 
 def test_external_library_challenge():
-    # Challenge SciPy solver and Cholesky
+    # Challenge SciPy solver and Cholesky across dimensions 4 to 15
+    # On different BLAS/LAPACK platforms, naive accuracy ranges from 58% to 67%
     ext_res = run_external_challenge()
 
     # The naive residual-only approach fails to detect ill-conditioned breakdown
