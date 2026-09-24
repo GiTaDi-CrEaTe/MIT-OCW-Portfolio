@@ -1,5 +1,5 @@
 """
-Tests for Flagship Capstone Experiments
+Tests for Capstone Experiments
 """
 
 import numpy as np
