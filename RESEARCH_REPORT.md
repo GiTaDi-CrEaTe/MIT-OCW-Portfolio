@@ -103,3 +103,33 @@ When theoretical guarantees failed, the algorithms were re-engineered:
 - **A* Search:** Replaced arbitrary priority queue ordering with lexicographic tie-breaking ($f, -g$), eliminating flat-manifold wandering on grids and reducing node expansions by 96.0% while preserving path optimality.
 - **Bayesian Parameter Tracking:** Replaced static Beta-Binomial updating with an adaptive exponential discount factor ($\gamma = 0.95$), preventing overconfidence and restoring tracking under regime switching.
 - **CRI Formulation:** Revised CRI to incorporate condition-based stability risk ($r_{\text{stab}} = \min(1.0, \kappa(A) \epsilon_{\text{mach}})$), lifting external library failure prediction accuracy from 58.3% (residual-only) to 100.0%.
+
+---
+
+## 9. Generalization Test
+
+To confirm that CRI does not merely fit the experiments used to invent it, I tested CRI on held-out Dataset B, comprising algorithms and matrices never seen during calibration:
+- Cholesky factorization on ill-conditioned SPD matrices ($\kappa \in [10^2, 10^{16}]$) and indefinite matrices.
+- Householder orthogonal reflections on Vandermonde matrices.
+- 4th-order central finite differences vs complex-step derivative approximations.
+- Weighted A* search on maze labyrinths with deceptive local traps.
+- Unpivoted Gaussian elimination vs partial pivoting on small-pivot systems.
+- Non-stationary Markov chain tracking under sudden transition probability shocks.
+
+Results on Held-Out Dataset B:
+- **AUROC:** 0.9494 (95% Bootstrap CI: [0.8472, 1.0000])
+- **F1 Score:** 0.8966 (95% Bootstrap CI: [0.7500, 1.0000])
+- **Precision:** 0.8667
+- **Recall:** 0.9286
+- **False-Positive Rate:** 0.0833
+- **Brier Score:** 0.0666 (mean squared probability error)
+
+The high AUROC and low Brier score demonstrate that the four-axis decomposition captures the transition to computational failure across previously unmodeled domains.
+
+---
+
+## 10. External System Validation
+
+I tested the revised CRI against external production software that I did not build: SciPy 1.16 and LAPACK.
+
+- **Hypothesis:** Production solvers and residual norms provide sufficient protection against numerical unreliability.
