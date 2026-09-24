@@ -30,3 +30,26 @@ Mathematical Formulation:
     We normalize each component against its calibrated critical tolerance tau_k:
       z_k = x_k / tau_k
       z = max_k (z_k)
+
+    The Computational Reliability Index rho in [0, 1] is computed as:
+      rho = 1 / (1 + z^2)
+
+  Properties:
+    - rho -> 1.0: Safe computational regime (all z_k << 1).
+    - rho = 0.5: Critical boundary (the worst component reaches its tolerance, z = 1.0).
+    - rho -> 0.0: Catastrophic breakdown (at least one component severely exceeds tolerance, z >> 1).
+    - Predicted Failure: Failure is predicted when rho < 0.5 (equivalently z > 1.0).
+
+  Engineering Note on Condition Estimation:
+    In these benchmark suites (n <= 15), exact 2-norm condition numbers kappa(A)
+    are computed via SVD. For large-scale production linear algebra, computing full
+    SVD costs O(n^3); an O(n^2) 1-norm condition estimator such as LAPACK's dgecon
+    should be substituted to avoid matching the cost of the linear solve itself.
+"""
+
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple, Union
+import numpy as np
+
+
+@dataclass
