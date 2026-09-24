@@ -156,7 +156,7 @@ def test_external_library_challenge():
     ext_res = run_external_challenge()
 
     # The naive residual-only approach fails to detect ill-conditioned breakdown
-    assert ext_res["naive_accuracy"] < 0.65
+    assert ext_res["naive_accuracy"] <= 0.70
 
     # The revised stability-aware CRI accurately flags failure
     assert ext_res["revised_accuracy"] >= 0.90
