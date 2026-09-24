@@ -56,6 +56,15 @@ from capstone.cri import (
 )
 
 
+def compute_stability_risk(cond: float) -> float:
+    """
+    Computes condition-based stability risk factor in [0, 1].
+    Saturates at 1.0 when condition number reaches inverse machine precision.
+    """
+    eps_mach = np.finfo(np.float64).eps
+    return float(min(1.0, float(cond) * eps_mach))
+
+
 def run_scipy_solver_challenge(n_range: Tuple[int, int] = (4, 15)) -> Dict[str, Any]:
     """
     Evaluates scipy.linalg.solve on Hilbert matrices across condition numbers.

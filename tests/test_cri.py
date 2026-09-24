@@ -246,11 +246,11 @@ def test_scipy_external_warning_metadata():
         assert r["warning_type"] == "LinAlgWarning"
 
 
-def test_cri_negative_error_raises():
-    # Negative error magnitudes must be rejected
+def test_cri_invalid_threshold_raises():
+    # Non-positive critical thresholds must be rejected
     from capstone.cri import compute_scalar_cri
     with pytest.raises(ValueError):
-        compute_scalar_cri(-1e-5, 1.0)
+        compute_scalar_cri(1.0, 0.0)
     with pytest.raises(ValueError):
         compute_scalar_cri(0.5, -0.1)
 

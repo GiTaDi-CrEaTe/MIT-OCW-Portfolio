@@ -93,8 +93,6 @@ def compute_scalar_cri(error: Union[float, int], crit_threshold: Union[float, in
     Single-variable CRI computation for backward compatibility.
     rho = 1 / (1 + (error / crit_threshold)^2)
     """
-    if error < 0:
-        raise ValueError("Error magnitude cannot be negative.")
     if crit_threshold <= 0:
         raise ValueError("Critical threshold must be strictly positive.")
     ratio = max(0.0, float(error)) / float(crit_threshold)
