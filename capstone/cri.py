@@ -53,3 +53,23 @@ import numpy as np
 
 
 @dataclass
+class ReliabilityComponents:
+    """
+    Decomposition of computational state into four foundational axes.
+    All values are non-negative.
+    """
+    numerical_error: float = 0.0
+    decision_error: float = 0.0
+    assumption_violation: float = 0.0
+    stability_risk: float = 0.0
+    domain: str = "generic"
+    metadata: Optional[Dict[str, Union[float, str, bool]]] = None
+
+
+@dataclass
+class CriticalTolerances:
+    """
+    Calibrated tolerance thresholds for each reliability component.
+    """
+    numerical_tol: float = 1e-2
+    decision_tol: float = 1e-3
