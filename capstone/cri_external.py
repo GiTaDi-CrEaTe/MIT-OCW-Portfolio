@@ -93,3 +93,43 @@ def run_scipy_solver_challenge(n_range: Tuple[int, int] = (4, 15)) -> Dict:
                     warning_msg = str(caught_warnings[-1].message)
 
             fwd_error = float(np.linalg.norm(x_solved - x_true) / np.linalg.norm(x_true))
+            residual_norm = float(np.linalg.norm(b - H @ x_solved) / np.linalg.norm(b))
+        except Exception as e:
+            exception_raised = True
+            exception_type = type(e).__name__
+            fwd_error = 1.0
+            residual_norm = 1.0
+
+        # Theoretical forward error bound: kappa(A) * eps_mach
+        fwd_error_bound = float(min(1e10, cond * eps_mach))
+
+        # Naive reliability assessment: evaluates residual only
+        naive_cri = compute_scalar_cri(residual_norm, crit_threshold=1e-12)
+
+        # Multi-axis revised CRI: includes condition stability risk
+        stab_risk = float(min(1.0, cond * eps_mach))
+        assump_violation = float(max(0.0, (cond - 1e14) / 1e14)) if cond > 1e14 else 0.0
+
+        comp = ReliabilityComponents(
+            numerical_error=residual_norm,
+            assumption_violation=assump_violation,
+            stability_risk=stab_risk,
+            domain="scipy_linear_solve",
+        )
+        revised_cri, z, dominant_mode = compute_composite_cri(comp, tolerances)
+
+        # Ground truth failure: forward error > 1e-2 (unacceptable precision loss)
+        is_true_failure = bool(fwd_error > 1e-2 or exception_raised)
+
+        records.append({
+            "n": n,
+            "cond": cond,
+            "forward_error": fwd_error,
+            "residual_norm": residual_norm,
+            "forward_error_bound": fwd_error_bound,
+            "naive_cri": naive_cri,
+            "revised_cri": revised_cri,
+            "stability_risk": stab_risk,
+            "dominant_mode": dominant_mode,
+            "is_true_failure": is_true_failure,
+            "naive_predicted_failure": bool(naive_cri < 0.5),
