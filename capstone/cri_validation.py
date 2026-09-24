@@ -263,3 +263,48 @@ def calibrate_cri_tolerances(dataset_a: List[EvaluationSample]) -> CriticalToler
     else:
         dec_tol = 1e-3
 
+    return CriticalTolerances(
+        numerical_tol=num_tol,
+        decision_tol=dec_tol,
+        assumption_tol=1.0,
+        stability_tol=0.5,
+    )
+
+
+def build_dataset_b() -> List[EvaluationSample]:
+    """
+    Constructs Dataset B (Held-Out Evaluation Set).
+    Contains computational problems and algorithms completely separate from Dataset A:
+      1. Cholesky Factorization on ill-conditioned SPD and indefinite matrices
+      2. Householder QR on Vandermonde matrices
+      3. 4th-Order Finite Difference vs Complex-Step Derivative
+      4. Weighted A* in deceptive mazes with local traps
+      5. Ill-conditioned linear systems (pivoted vs unpivoted Gaussian elimination)
+      6. Non-stationary Markov chain under sudden shock
+    """
+    samples: List[EvaluationSample] = []
+    rng = np.random.default_rng(2026)
+
+    # -------------------------------------------------------------
+    # 1. Cholesky Factorization: A = L L^T
+    # -------------------------------------------------------------
+    for kappa in [1e2, 1e4, 1e8, 1e12, 1e16]:
+        # Generate random SPD matrix with condition number kappa
+        n = 10
+        Q, _ = np.linalg.qr(rng.standard_normal((n, n)))
+        s = np.geomspace(1.0, 1.0 / kappa, num=n)
+        A = Q @ np.diag(s) @ Q.T
+        A = 0.5 * (A + A.T)
+
+        try:
+            L = np.zeros_like(A)
+            for i in range(n):
+                for j in range(i + 1):
+                    s_sum = np.dot(L[i, :j], L[j, :j])
+                    if i == j:
+                        val = A[i, i] - s_sum
+                        if val <= 0:
+                            raise np.linalg.LinAlgError("Non-positive pivot")
+                        L[i, j] = np.sqrt(val)
+                    else:
+                        L[i, j] = (A[i, j] - s_sum) / L[j, j]
