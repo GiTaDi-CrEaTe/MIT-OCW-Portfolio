@@ -308,3 +308,53 @@ def build_dataset_b() -> List[EvaluationSample]:
                         L[i, j] = np.sqrt(val)
                     else:
                         L[i, j] = (A[i, j] - s_sum) / L[j, j]
+            recon_err = float(np.linalg.norm(A - L @ L.T) / np.linalg.norm(A))
+            is_fail = bool(recon_err > 1e-2)
+        except Exception:
+            recon_err = 1.0
+            is_fail = True
+
+        stab_risk = float(min(1.0, kappa * 1e-15))
+        assump_violation = float(max(0.0, (kappa - 1e12) / 1e12)) if kappa > 1e12 else 0.0
+
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    numerical_error=recon_err,
+                    assumption_violation=assump_violation,
+                    stability_risk=stab_risk,
+                    domain="cholesky_factorization",
+                ),
+                is_failure=is_fail,
+                domain="cholesky_factorization",
+                description=f"Cholesky SPD kappa={kappa:.0e}",
+            )
+        )
+
+    # Indefinite matrix test for Cholesky (explicit assumption violation)
+    for delta in [1e-4, 1e-2, 0.1]:
+        A_indef = np.eye(5)
+        A_indef[0, 0] = -delta  # Violates positive definiteness
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    numerical_error=1.0,
+                    assumption_violation=float(delta * 100),
+                    stability_risk=1.0,
+                    domain="cholesky_factorization",
+                ),
+                is_failure=True,
+                domain="cholesky_factorization",
+                description=f"Cholesky indefinite min_eig=-{delta}",
+            )
+        )
+
+    # -------------------------------------------------------------
+    # 2. Householder QR on Vandermonde Matrices
+    # -------------------------------------------------------------
+    for n_pts in [6, 10, 14, 18]:
+        # Vandermonde matrix on [0, 1] is notoriously ill-conditioned
+        pts = np.linspace(0.1, 0.9, n_pts)
+        V = np.vander(pts, N=n_pts)
+        cond_v = float(np.linalg.cond(V))
+
