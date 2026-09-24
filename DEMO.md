@@ -40,3 +40,17 @@ On a 10x10 Hilbert matrix (condition number ~10^13):
 The failure mechanism is **catastrophic cancellation**.
 
 Classical Gram-Schmidt computes:
+$$v_k = a_k - \sum_{j=1}^{k-1} (q_j^T a_k) q_j$$
+
+When $a_k$ is nearly in the span of the previous columns, $v_k$ is the difference of two nearly identical large vectors. In IEEE 754 float64 arithmetic, this difference loses almost all significant bits. The resulting vector is dominated by roundoff noise, which is then normalized to unit length -- introducing a fundamentally wrong direction into the basis.
+
+The key insight: the **residual** ||A - QR|| stays small because the reconstruction only requires that QR approximately equals A, which is a much weaker condition than Q actually being orthogonal. Small backward error does not imply a correct answer.
+
+## The Fix and the Hypothesis (1:05 -- 1:30)
+
+Modified Gram-Schmidt (MGS) projects sequentially against the updated working vector rather than the original columns. This reduces error from $\mathcal{O}(\kappa^2 \epsilon_{mach})$ to $\mathcal{O}(\kappa \epsilon_{mach})$.
+
+On the same Hilbert matrix:
+- CGS orthogonality error: 3.01
+- MGS orthogonality error: $1.38 \times 10^{-3}$
+
