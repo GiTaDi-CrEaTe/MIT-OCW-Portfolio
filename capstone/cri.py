@@ -240,3 +240,31 @@ def compute_auroc(y_true: np.ndarray, y_scores: np.ndarray) -> float:
 
     n_pos = int(np.sum(y_true == 1))
     n_neg = int(np.sum(y_true == 0))
+
+    if n_pos == 0 or n_neg == 0:
+        return 0.5  # Undefined when one class is completely missing
+
+    ranks = _rank_data_average(y_scores)
+    rank_sum_pos = np.sum(ranks[y_true == 1])
+    u_stat = rank_sum_pos - (n_pos * (n_pos + 1)) / 2.0
+    auroc = u_stat / (n_pos * n_neg)
+    return float(np.clip(auroc, 0.0, 1.0))
+
+
+def bootstrap_ci(
+    y_true: np.ndarray,
+    y_scores: np.ndarray,
+    n_bootstraps: int = 1000,
+    seed: int = 42,
+    alpha: float = 0.05,
+) -> Dict[str, Tuple[float, float]]:
+    """
+    Computes bootstrap confidence intervals for AUROC and F1 score.
+    Addresses small sample size uncertainty transparently.
+    """
+    rng = np.random.default_rng(seed)
+    n = len(y_true)
+    aurocs = []
+    f1s = []
+
+    for _ in range(n_bootstraps):
