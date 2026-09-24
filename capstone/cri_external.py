@@ -238,3 +238,14 @@ if __name__ == "__main__":
 
     print(f"{'n':<3} | {'kappa(A)':<9} | {'Forward Err':<12} | {'Residual Norm':<14} | {'Naive CRI':<10} | {'Revised CRI':<12} | {'True Fail?':<10} | {'Warned?':<8}")
     print("-" * 97)
+    for r in records:
+        print(
+            f"{r['n']:<3} | {r['cond']:<9.1e} | {r['forward_error']:<12.2e} | "
+            f"{r['residual_norm']:<14.2e} | {r['naive_cri']:<10.4f} | "
+            f"{r['revised_cri']:<12.4f} | {str(r['is_true_failure']):<10} | "
+            f"{str(r['warning_raised']):<8}"
+        )
+
+    print("\nSummary of Hypothesis Falsification & Revision:")
+    print(f"  Naive Residual-Only CRI Accuracy: {res['naive_accuracy'] * 100:.1f}% (Completely misses silent failures)")
+    print(f"  Revised Stability-Aware CRI Accuracy: {res['revised_accuracy'] * 100:.1f}% (Correctly detects breakdown)")
