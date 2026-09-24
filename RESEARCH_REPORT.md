@@ -153,3 +153,20 @@ The entire experimental pipeline is deterministic and reproducible via automated
 ```bash
 # Clone and enter repository
 git clone https://github.com/GiTaDi-CrEaTe/MIT-OCW-Portfolio.git
+cd MIT-OCW-Portfolio
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the 55-test automated verification suite
+pytest -v
+
+# Run all 8 capstone experiments and regenerate all figures in artifacts/
+python3 capstone/run_experiments.py
+```
+
+- **Repository Source:** [`https://github.com/GiTaDi-CrEaTe/MIT-OCW-Portfolio`](https://github.com/GiTaDi-CrEaTe/MIT-OCW-Portfolio)
+- **CRI Implementation:** [`capstone/cri.py`](./capstone/cri.py)
+- **Holdout Validation Suite:** [`capstone/cri_validation.py`](./capstone/cri_validation.py)
+- **External Challenge Suite:** [`capstone/cri_external.py`](./capstone/cri_external.py)
+- **Generated Visual Figures:** [`artifacts/`](./artifacts/)
