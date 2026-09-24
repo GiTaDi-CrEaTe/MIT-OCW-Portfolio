@@ -144,3 +144,4 @@
 - **Symptom:** On Python 3.13 / NumPy 2.3, naive residual accuracy was 58.3% (7/12). On Python 3.12 with runner-packaged OpenBLAS, naive residual accuracy was 66.7% (8/12).
 - **Diagnosis:** Borderline Hilbert matrix dimension ($n = 10$) produced slightly different backward residuals depending on compiler SIMD vectorization in LAPACK's `dgesv`.
 - **Resolution:** Hardened test assertion to check `naive_accuracy <= 0.70` and verified that condition-aware CRI strictly outperforms naive residual detection by >20% across all platforms.
+- **Outcome:** CI test suite reliably passes across Python 3.11, 3.12, and 3.13 without brittle platform-specific thresholds.
