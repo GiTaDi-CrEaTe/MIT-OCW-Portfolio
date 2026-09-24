@@ -88,7 +88,7 @@ class EvaluationSample:
     description: str
 
 
-def compute_scalar_cri(error: float, crit_threshold: float) -> float:
+def compute_scalar_cri(error: Union[float, int], crit_threshold: Union[float, int]) -> float:
     """
     Single-variable CRI computation for backward compatibility.
     rho = 1 / (1 + (error / crit_threshold)^2)
