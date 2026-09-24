@@ -193,3 +193,28 @@ def run_scipy_cholesky_challenge(n_range: Tuple[int, int] = (4, 15)) -> Dict:
             "cholesky_succeeded": cholesky_succeeded,
             "warning_raised": warning_raised,
             "warning_type": warning_type,
+            "warning_msg": warning_msg,
+            "exception_raised": exception_raised,
+            "exception_type": exception_type,
+            "reconstruction_error": recon_err,
+            "solve_forward_error": solve_err,
+        })
+
+    return {"records": records}
+
+
+def run_external_challenge() -> Dict:
+    """
+    Runs complete external library validation suite.
+    """
+    solve_res = run_scipy_solver_challenge((4, 15))
+    chol_res = run_scipy_cholesky_challenge((4, 15))
+
+    # Compute comparative accuracy of Naive vs Revised CRI in predicting forward error failure
+    records = solve_res["records"]
+    y_true = np.array([r["is_true_failure"] for r in records], dtype=int)
+
+    naive_preds = np.array([r["naive_predicted_failure"] for r in records], dtype=int)
+    revised_preds = np.array([r["revised_predicted_failure"] for r in records], dtype=int)
+
+    naive_accuracy = float(np.mean(naive_preds == y_true))
