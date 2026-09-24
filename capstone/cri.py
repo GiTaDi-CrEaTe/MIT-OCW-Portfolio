@@ -174,3 +174,33 @@ def compute_classification_metrics(
     y_scores = np.asarray(y_scores, dtype=np.float64)
 
     if len(y_true) == 0:
+        raise ValueError("Cannot compute metrics on empty arrays.")
+
+    y_pred = (y_scores >= threshold).astype(int)
+
+    tp = int(np.sum((y_true == 1) & (y_pred == 1)))
+    fp = int(np.sum((y_true == 0) & (y_pred == 1)))
+    fn = int(np.sum((y_true == 1) & (y_pred == 0)))
+    tn = int(np.sum((y_true == 0) & (y_pred == 0)))
+
+    precision = float(tp / (tp + fp)) if (tp + fp) > 0 else 0.0
+    recall = float(tp / (tp + fn)) if (tp + fn) > 0 else 0.0
+    f1 = float(2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
+    fpr = float(fp / (fp + tn)) if (fp + tn) > 0 else 0.0
+
+    # Brier calibration score: mean squared difference between predicted probability and label
+    brier_score = float(np.mean((y_scores - y_true) ** 2))
+
+    # AUROC calculation via Mann-Whitney U test with exact mid-rank tie handling
+    auroc = compute_auroc(y_true, y_scores)
+
+    return {
+        "auroc": auroc,
+        "f1": f1,
+        "precision": precision,
+        "recall": recall,
+        "fpr": fpr,
+        "brier_score": brier_score,
+        "tp": tp,
+        "fp": fp,
+        "fn": fn,
