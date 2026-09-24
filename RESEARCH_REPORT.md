@@ -73,3 +73,33 @@ I built eight reproducible experiments to evaluate these boundaries:
 | **5. Bayesian Updating** | Posterior contracts onto true parameter $\theta$ | Static model reports false certainty under parameter drift | Static credible interval coverage drops to **4.2%**; adaptive discount updating restores coverage to **56.9%** | [Fig 5](./artifacts/fig5_model_misspecification.png) |
 | **6. Algebraic Precision** | Exact group identities in $\mathbb{Z}/n\mathbb{Z}$ | Float64 addition fails associativity | RSA modular decryption error is **0.0**; float64 $(10^{16} + 1) - 10^{16} - 1$ yields **1.0 (100% loss)** | [Fig 6](./artifacts/fig6_computational_reliability.png) |
 | **7. Holdout Validation** | CRI predicts failure on unseen domains | Evaluated on held-out Dataset B ($N=38$) | **AUROC = 0.9494** (95% CI: [0.8472, 1.0000]), **F1 = 0.8966**, Precision = 0.8667, Recall = 0.9286 | [Fig 7](./artifacts/fig7_cri_holdout_validation.png) |
+| **8. External Challenge** | SciPy solver provides reliable outputs | Low residual masks high forward error | At $n=13$, `scipy.linalg.solve` forward error is **1580%** while residual is $3.59 \times 10^{-16}$; CRI flags failure | [Fig 8](./artifacts/fig8_cri_external_validation.png) |
+
+---
+
+## 6. Unexpected Result
+
+Small backward error does not imply forward accuracy.
+
+In Experiment 1, Classical Gram-Schmidt produced a reconstruction residual $\|A - QR\| \approx 10^{-17}$ on a 10x10 Hilbert matrix, yet the computed basis vectors were non-orthogonal ($\|Q^T Q - I\|_2 = 3.01$), with column inner products exceeding 0.8.
+
+In Experiment 8, this exact failure mechanism appeared in production SciPy code. Solving $H_{13} x = b$ with `scipy.linalg.solve` produced an actual forward error of $15.8$ ($1580\%$ relative error), while the backward residual norm $\|b - H\hat{x}\|/\|b\|$ was $3.59 \times 10^{-16}$. The solver executed without throwing an exception. Checking residuals alone is fundamentally insufficient for verifying computational integrity.
+
+---
+
+## 7. Failure / Limitation
+
+1. **Threshold Scaling:** While the functional form of CRI unifies the transition shape across domains, the base critical tolerances ($\tau_k$) required calibration on representative data. CRI models the geometry of failure, not universal scale-free constants.
+2. **Held-Out Sample Size:** Dataset B contains 38 distinct problem configurations. While sufficient for statistical separation, the 95% bootstrap confidence interval for AUROC spans [0.8472, 1.0000]. Larger benchmark suites are needed to narrow estimation variance.
+3. **Condition Estimation Cost:** Computing exact condition numbers $\kappa(A) = \sigma_{\max} / \sigma_{\min}$ costs $O(n^3)$, which matches the cost of solving the system. In production, 1-norm condition estimators (such as LAPACK's `dgecon`) must be used as approximations.
+
+---
+
+## 8. What I Changed
+
+When theoretical guarantees failed, the algorithms were re-engineered:
+- **QR Decomposition:** Replaced Classical Gram-Schmidt with Modified Gram-Schmidt, projecting sequentially against updated vectors to reduce error accumulation from $O(\kappa^2 \epsilon_{\text{mach}})$ to $O(\kappa \epsilon_{\text{mach}})$.
+- **SVD Implementation:** Replaced $A^T A$ eigenvalue formulation with direct bidiagonalization to avoid condition number squaring.
+- **A* Search:** Replaced arbitrary priority queue ordering with lexicographic tie-breaking ($f, -g$), eliminating flat-manifold wandering on grids and reducing node expansions by 96.0% while preserving path optimality.
+- **Bayesian Parameter Tracking:** Replaced static Beta-Binomial updating with an adaptive exponential discount factor ($\gamma = 0.95$), preventing overconfidence and restoring tracking under regime switching.
+- **CRI Formulation:** Revised CRI to incorporate condition-based stability risk ($r_{\text{stab}} = \min(1.0, \kappa(A) \epsilon_{\text{mach}})$), lifting external library failure prediction accuracy from 58.3% (residual-only) to 100.0%.
