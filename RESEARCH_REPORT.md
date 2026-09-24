@@ -102,7 +102,7 @@ When theoretical guarantees failed, the algorithms were re-engineered:
 - **SVD Implementation:** Replaced $A^T A$ eigenvalue formulation with direct bidiagonalization to avoid condition number squaring.
 - **A* Search:** Replaced arbitrary priority queue ordering with lexicographic tie-breaking ($f, -g$), eliminating flat-manifold wandering on grids and reducing node expansions by 96.0% while preserving path optimality.
 - **Bayesian Parameter Tracking:** Replaced static Beta-Binomial updating with an adaptive exponential discount factor ($\gamma = 0.95$), preventing overconfidence and restoring tracking under regime switching.
-- **CRI Formulation:** Revised CRI to incorporate condition-based stability risk ($r_{\text{stab}} = \min(1.0, \kappa(A) \epsilon_{\text{mach}})$), lifting external library failure prediction accuracy from 58.3% (residual-only) to 100.0%.
+- **CRI Formulation:** Revised CRI to incorporate condition-based stability risk ($r_{\text{stab}} = \min(1.0, \kappa(A) \epsilon_{\text{mach}})$), lifting external library failure prediction accuracy from 58.3%--66.7% (residual-only) to 100.0% across test environments.
 
 ---
 
