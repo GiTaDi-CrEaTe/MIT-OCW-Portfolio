@@ -8,7 +8,7 @@ the chain rule and written out explicitly. No autograd, no `torch`, no
 `sklearn`. `numpy` is used only for matrix arithmetic.
 
 ------------------------------------------------------------------------------
-THEORY RECAP (see Pset 7-8 in Psets/pset_roadmap.md)
+THEORY RECAP (see Pset 7-8 in study_notes/6.036-Introduction-to-Machine-Learning_pset_notes.md)
 ------------------------------------------------------------------------------
 For a network with L layers, layer l computes:
     z[l] = W[l] @ a[l-1] + b[l]        (pre-activation, "logits" of the layer)
