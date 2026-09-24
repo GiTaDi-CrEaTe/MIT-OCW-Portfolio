@@ -198,3 +198,25 @@ def test_composite_cri_robustness_and_bounds():
     rho_z, z_z, _ = compute_composite_cri(zero_comp, tolerances)
     assert rho_z == 1.0
     assert z_z == 0.0
+
+    # Negative inputs should be clamped safely, not crash or produce negative z
+    neg_comp = ReliabilityComponents(-0.5, -0.1, -1.0, -0.2)
+    rho_neg, z_neg, _ = compute_composite_cri(neg_comp, tolerances)
+    assert rho_neg == 1.0
+    assert z_neg == 0.0
+
+    # Huge/infinite inputs
+    huge_comp = ReliabilityComponents(1e30, 0.0, 0.0, 0.0)
+    rho_huge, z_huge, _ = compute_composite_cri(huge_comp, tolerances)
+    assert rho_huge < 1e-10
+    assert z_huge > 1e10
+
+    # p-norm aggregation method
+    rho_p, z_p, dom_p = compute_composite_cri(
+        ReliabilityComponents(numerical_error=0.01),
+        tolerances,
+        aggregation="p_norm",
+        p_norm=4.0,
+    )
+    assert 0.0 <= rho_p <= 1.0
+    assert z_p > 0.0
