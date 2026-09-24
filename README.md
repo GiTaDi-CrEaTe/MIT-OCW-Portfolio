@@ -37,19 +37,6 @@ The capstone experiments (documented in [`capstone/`](./capstone/README.md), fig
 
 ---
 
-## The Bigger Picture: When Theory Meets Hardware
-
-Foundations Lab is not an isolated exercise in working through problem sets. The central question here -- what actually happens when mathematical theorems hit real computational constraints -- is the same thread running through almost everything else I build:
-
-- **Synth Guard (AI Media Detection):** Machine learning models are trained assuming clean, stationary data. In the real world, adversarial noise and compression break those assumptions immediately. I built Synth Guard to handle model misspecification in synthetic media detection instead of trusting brittle decision boundaries.
-- **aero-kv (High-Performance Storage):** An algorithm textbook promises $O(1)$ hash table lookups or $O(\log n)$ tree searches. But real hardware has CPU cache hierarchies, memory fences, and tail latency spikes. In aero-kv, I worked through what it actually takes to build storage engines with predictable latency and crash-consistency invariants.
-- **AI & Systems Experiments:** Exploring scheduling, memory protection, and deterministic resource isolation when agent runtimes run on constrained local machines.
-
-Instead of building disconnected projects, I keep coming back to the same theme: finding where systems break down under real-world constraints, and figuring out how to engineer around the failure.
-
----
-
-
 ## The Six Courses
 
 | Course | What I investigated | Key implementation | What surprised me |
