@@ -123,3 +123,28 @@ def test_bootstrap_confidence_intervals():
 
 def test_holdout_validation_pipeline():
     dataset_a = build_dataset_a()
+    dataset_b = build_dataset_b()
+
+    assert len(dataset_a) >= 20
+    assert len(dataset_b) >= 20
+
+    # Ensure domains in Dataset B are genuinely distinct from Dataset A
+    domains_a = {s.domain for s in dataset_a}
+    domains_b = {s.domain for s in dataset_b}
+    overlap = domains_a.intersection(domains_b)
+    assert len(overlap) == 0, f"Held-out dataset B contains domains seen in A: {overlap}"
+
+    # Execute full validation
+    val_res = run_holdout_validation()
+    m = val_res["metrics"]
+    ci = val_res["bootstrap_ci"]
+
+    # Verify quantitative performance targets
+    assert m["auroc"] > 0.85, f"Held-out AUROC too low: {m['auroc']}"
+    assert m["f1"] > 0.75, f"Held-out F1 too low: {m['f1']}"
+    assert m["recall"] > 0.80, f"Held-out Recall too low: {m['recall']}"
+    assert m["fpr"] < 0.20, f"Held-out FPR too high: {m['fpr']}"
+    assert m["brier_score"] < 0.15, f"Brier score too poor: {m['brier_score']}"
+
+    # Bootstrap intervals must bound point estimates reasonably
+    assert ci["auroc_ci"][0] <= m["auroc"] <= ci["auroc_ci"][1] + 1e-6
