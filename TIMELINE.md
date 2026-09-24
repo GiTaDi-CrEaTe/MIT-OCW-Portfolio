@@ -22,3 +22,13 @@ This timeline documents the chronological development of the Foundations Lab pro
 - Discovered the finite-difference U-curve (setting epsilon too small gives 100% error due to catastrophic cancellation)
 - 6.034 artificial intelligence: A* search, minimax, CSP
 - Discovered the f-cost plateau problem and solved it with lexicographic tie-breaking
+
+## Phase 4: Synthesis and the CRI Hypothesis (Month 7)
+- Designed the six capstone experiments
+- Ran controlled condition-number sweeps across 14 orders of magnitude
+- Noticed a pattern: every domain has a transition boundary between reliable and unreliable computation
+- Formulated the Computational Reliability Index hypothesis
+
+## Phase 5: Validation and Falsification Attempt (Month 8)
+- Built holdout validation for CRI
+- Tested CRI against an external system (scipy) that I did not build
