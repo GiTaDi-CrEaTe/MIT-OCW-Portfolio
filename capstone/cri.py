@@ -204,3 +204,39 @@ def compute_classification_metrics(
         "tp": tp,
         "fp": fp,
         "fn": fn,
+        "tn": tn,
+        "sample_count": len(y_true),
+    }
+
+
+def _rank_data_average(scores: np.ndarray) -> np.ndarray:
+    """
+    Computes 1-based ranks with average ties in pure NumPy.
+    Assigns the mid-rank to duplicate values.
+    """
+    scores = np.asarray(scores, dtype=np.float64)
+    n = len(scores)
+    order = np.argsort(scores)
+    sorted_scores = scores[order]
+
+    ranks = np.empty(n, dtype=np.float64)
+    i = 0
+    while i < n:
+        j = i
+        while j < n and sorted_scores[j] == sorted_scores[i]:
+            j += 1
+        avg_rank = (i + 1 + j) / 2.0
+        ranks[order[i:j]] = avg_rank
+        i = j
+    return ranks
+
+
+def compute_auroc(y_true: np.ndarray, y_scores: np.ndarray) -> float:
+    """
+    Computes Area Under ROC curve using Mann-Whitney U statistic with mid-rank tie handling.
+    """
+    y_true = np.asarray(y_true, dtype=int)
+    y_scores = np.asarray(y_scores, dtype=np.float64)
+
+    n_pos = int(np.sum(y_true == 1))
+    n_neg = int(np.sum(y_true == 0))
