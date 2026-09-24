@@ -220,3 +220,25 @@ def test_composite_cri_robustness_and_bounds():
     )
     assert 0.0 <= rho_p <= 1.0
     assert z_p > 0.0
+
+    # Invalid aggregation raises ValueError
+    with pytest.raises(ValueError):
+        compute_composite_cri(zero_comp, tolerances, aggregation="invalid_mode")
+
+
+def test_scipy_external_warning_metadata():
+    records = run_scipy_solver_challenge((10, 14))["records"]
+    assert len(records) == 5
+
+    # Check warning and exception metadata fields exist
+    for r in records:
+        assert "warning_raised" in r
+        assert "warning_type" in r
+        assert "warning_msg" in r
+        assert "exception_raised" in r
+
+    # At n >= 12, SciPy emits LinAlgWarning
+    high_n = [r for r in records if r["n"] >= 12]
+    for r in high_n:
+        assert r["warning_raised"] is True
+        assert r["warning_type"] == "LinAlgWarning"
