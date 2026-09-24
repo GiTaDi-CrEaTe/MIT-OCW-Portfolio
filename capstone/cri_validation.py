@@ -218,3 +218,48 @@ def build_dataset_a() -> List[EvaluationSample]:
                 stability_risk=0.0,
                 domain="discrete_arithmetic",
             ),
+            is_failure=False,
+            domain="discrete_arithmetic",
+            description="RSA modular arithmetic in Z/nZ",
+        )
+    )
+    samples.append(
+        EvaluationSample(
+            components=ReliabilityComponents(
+                numerical_error=1.0,
+                assumption_violation=1.5,
+                stability_risk=1.0,
+                domain="discrete_arithmetic",
+            ),
+            is_failure=True,
+            domain="discrete_arithmetic",
+            description="IEEE-754 float64 1e16 + 1.0 cancellation",
+        )
+    )
+
+    return samples
+
+
+def calibrate_cri_tolerances(dataset_a: List[EvaluationSample]) -> CriticalTolerances:
+    """
+    Derives critical tolerance thresholds from Dataset A.
+    Calibration selects thresholds that optimize separation between reliable and failed points.
+    """
+    # Collect values for samples labeled as failure vs success
+    num_errs_fail = [s.components.numerical_error for s in dataset_a if s.is_failure and s.components.numerical_error > 0]
+    num_errs_safe = [s.components.numerical_error for s in dataset_a if not s.is_failure and s.components.numerical_error > 0]
+
+    dec_errs_fail = [s.components.decision_error for s in dataset_a if s.is_failure and s.components.decision_error > 0]
+    dec_errs_safe = [s.components.decision_error for s in dataset_a if not s.is_failure and s.components.decision_error > 0]
+
+    # Geometric mean threshold between max safe and min fail
+    if num_errs_fail and num_errs_safe:
+        num_tol = float(np.sqrt(max(num_errs_safe) * min(num_errs_fail)))
+    else:
+        num_tol = 1e-2
+
+    if dec_errs_fail and dec_errs_safe:
+        dec_tol = float(np.sqrt(max(dec_errs_safe) * min(dec_errs_fail)))
+    else:
+        dec_tol = 1e-3
+
