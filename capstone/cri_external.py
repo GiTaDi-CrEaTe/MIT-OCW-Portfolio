@@ -38,7 +38,7 @@ import os
 import sys
 import warnings
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 import numpy as np
 import scipy.linalg
 
@@ -56,7 +56,7 @@ from capstone.cri import (
 )
 
 
-def run_scipy_solver_challenge(n_range: Tuple[int, int] = (4, 15)) -> Dict:
+def run_scipy_solver_challenge(n_range: Tuple[int, int] = (4, 15)) -> Dict[str, Any]:
     """
     Evaluates scipy.linalg.solve on Hilbert matrices across condition numbers.
     Compares naive residual-based reliability against condition-aware CRI.
