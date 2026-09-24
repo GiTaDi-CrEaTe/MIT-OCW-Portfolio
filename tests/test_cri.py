@@ -148,3 +148,28 @@ def test_holdout_validation_pipeline():
 
     # Bootstrap intervals must bound point estimates reasonably
     assert ci["auroc_ci"][0] <= m["auroc"] <= ci["auroc_ci"][1] + 1e-6
+    assert ci["f1_ci"][0] <= m["f1"] <= ci["f1_ci"][1] + 1e-6
+
+
+def test_external_library_challenge():
+    # Challenge SciPy solver and Cholesky
+    ext_res = run_external_challenge()
+
+    # The naive residual-only approach fails to detect ill-conditioned breakdown
+    assert ext_res["naive_accuracy"] < 0.65
+
+    # The revised stability-aware CRI accurately flags failure
+    assert ext_res["revised_accuracy"] >= 0.90
+
+    # Check Cholesky breakdown on high-order Hilbert matrix
+    chol_records = ext_res["cholesky_challenge"]["records"]
+    high_order_fail = [r for r in chol_records if r["n"] >= 14]
+    assert len(high_order_fail) > 0
+    for r in high_order_fail:
+        assert not r["cholesky_succeeded"] or r["solve_forward_error"] > 0.5
+
+
+def test_auroc_ties_and_edge_cases():
+    # Completely tied scores must yield 0.5 (random guess)
+    y_true_tied = np.array([0, 1])
+    y_scores_tied = np.array([0.5, 0.5])
