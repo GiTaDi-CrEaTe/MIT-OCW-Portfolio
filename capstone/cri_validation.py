@@ -593,3 +593,16 @@ if __name__ == "__main__":
     ci = res["bootstrap_ci"]
     tol = res["calibrated_tolerances"]
 
+    print(f"Dataset A Size: {res['dataset_a_count']} samples (Calibrated Tolerances)")
+    print(f"  Calibrated Numerical Tol:  {tol.numerical_tol:.2e}")
+    print(f"  Calibrated Decision Tol:   {tol.decision_tol:.2e}")
+    print(f"  Calibrated Assumption Tol: {tol.assumption_tol:.2f}")
+    print(f"  Calibrated Stability Tol:  {tol.stability_tol:.2f}")
+    print("\nDataset B Size: {0} samples (Unseen Held-Out Problems)".format(res['dataset_b_count']))
+    print(f"  AUROC:                     {m['auroc']:.4f}  (95% CI: [{ci['auroc_ci'][0]:.4f}, {ci['auroc_ci'][1]:.4f}])")
+    print(f"  F1 Score:                  {m['f1']:.4f}  (95% CI: [{ci['f1_ci'][0]:.4f}, {ci['f1_ci'][1]:.4f}])")
+    print(f"  Precision:                 {m['precision']:.4f}")
+    print(f"  Recall:                    {m['recall']:.4f}")
+    print(f"  False-Positive Rate (FPR): {m['fpr']:.4f}")
+    print(f"  Brier Calibration Score:   {m['brier_score']:.4f}")
+    print(f"  Confusion Matrix:          TP={m['tp']}, FP={m['fp']}, FN={m['fn']}, TN={m['tn']}")
