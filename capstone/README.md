@@ -203,3 +203,23 @@ At $n = 13$ ($\kappa \approx 2.0 \times 10^{18}$), `scipy.linalg.solve` returned
 By incorporating condition-based stability risk ($r_{\text{stab}} = \min(1.0, \kappa(A) \epsilon_{\text{mach}})$), the revised CRI flagged failure ($\rho < 0.5$) starting at $n=11$, achieving 100.0% accuracy in detecting forward corruption.
 
 ---
+
+## How to Replicate
+
+All code is self-contained and reproducible. To run the full verification suite and regenerate all eight figures:
+
+```bash
+python3 capstone/run_experiments.py
+```
+
+To run individual investigations:
+```bash
+python3 capstone/numerical_stability.py
+python3 capstone/svd_investigation.py
+python3 capstone/search_efficiency.py
+python3 capstone/gradient_precision.py
+python3 capstone/model_misspecification.py
+python3 capstone/cross_course_synthesis.py
+python3 capstone/cri_validation.py
+python3 capstone/cri_external.py
+```
