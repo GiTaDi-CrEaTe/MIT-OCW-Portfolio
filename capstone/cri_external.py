@@ -63,3 +63,33 @@ def run_scipy_solver_challenge(n_range: Tuple[int, int] = (4, 15)) -> Dict:
     """
     eps_mach = np.finfo(np.float64).eps
     tolerances = CriticalTolerances(
+        numerical_tol=1e-2,
+        decision_tol=1e-3,
+        assumption_tol=1.0,
+        stability_tol=0.5,
+    )
+
+    records = []
+
+    for n in range(n_range[0], n_range[1] + 1):
+        H = scipy.linalg.hilbert(n)
+        cond = float(np.linalg.cond(H))
+        x_true = np.ones(n, dtype=np.float64)
+        b = H @ x_true
+
+        warning_raised = False
+        warning_type = "None"
+        warning_msg = ""
+        exception_raised = False
+        exception_type = "None"
+
+        try:
+            with warnings.catch_warnings(record=True) as caught_warnings:
+                warnings.simplefilter("always")
+                x_solved = scipy.linalg.solve(H, b)
+                if len(caught_warnings) > 0:
+                    warning_raised = True
+                    warning_type = caught_warnings[-1].category.__name__
+                    warning_msg = str(caught_warnings[-1].message)
+
+            fwd_error = float(np.linalg.norm(x_solved - x_true) / np.linalg.norm(x_true))
