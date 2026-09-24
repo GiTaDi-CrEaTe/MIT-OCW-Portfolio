@@ -46,3 +46,17 @@ Each review is documented as:
 
 ## Self-Critique #3: Sample Size in Holdout Validation
 
+**Concern:** The holdout dataset contains a finite number of experiments ($N=38$). Statistical confidence in AUROC and F1 is subject to sample variance with small datasets.
+
+**My Response:** Agreed. With 38 holdout experiments, single-number metrics can hide uncertainty. Reporting confidence intervals is essential for honest evaluation.
+
+**Experiment Added:** Implemented bootstrap resampling (1,000 resamples with replacement) across held-out predictions in `capstone/cri.py`.
+
+**Result:** 
+- AUROC point estimate: 0.9494 (95% Bootstrap CI: [0.8472, 1.0000])
+- F1 score point estimate: 0.8966 (95% Bootstrap CI: [0.7500, 1.0000])
+
+**What Changed:** All reported classification metrics in `RESEARCH_REPORT.md` and Figure 7 now display 95% bootstrap confidence intervals to communicate statistical uncertainty explicitly.
+
+## Self-Critique #4: External Library Residual Blindness
+
