@@ -73,3 +73,28 @@ def test_composite_cri_weakest_link():
     weak_link_comp = ReliabilityComponents(
         numerical_error=1e-6,
         decision_error=0.01,  # 10x decision_tol
+        assumption_violation=0.0,
+        stability_risk=0.0,
+    )
+    rho_fail, z_fail, dom_fail = compute_composite_cri(weak_link_comp, tolerances)
+    assert dom_fail == "decision_error"
+    assert z_fail == 10.0
+    assert rho_fail < 0.02
+    assert predict_failure(rho_fail)
+
+
+def test_classification_metrics_and_auroc():
+    y_true = np.array([0, 0, 0, 1, 1, 1])
+    y_scores = np.array([0.1, 0.2, 0.3, 0.7, 0.8, 0.9])
+
+    m = compute_classification_metrics(y_true, y_scores, threshold=0.5)
+    assert m["auroc"] == 1.0
+    assert m["f1"] == 1.0
+    assert m["precision"] == 1.0
+    assert m["recall"] == 1.0
+    assert m["fpr"] == 0.0
+    assert m["tp"] == 3
+    assert m["tn"] == 3
+
+    # Test imperfect classification
+    y_scores_imperfect = np.array([0.1, 0.6, 0.2, 0.4, 0.8, 0.9])
