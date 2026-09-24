@@ -513,3 +513,33 @@ def build_dataset_b() -> List[EvaluationSample]:
         # Static estimator incurs error proportional to shock
         static_err = float(shock_magnitude)
         is_fail = bool(static_err > 0.15)
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    decision_error=static_err,
+                    assumption_violation=float(shock_magnitude * 2.0),
+                    stability_risk=float(shock_magnitude),
+                    domain="markov_shock",
+                ),
+                is_failure=is_fail,
+                domain="markov_shock",
+                description=f"Markov shock magnitude={shock_magnitude:.1f}",
+            )
+        )
+
+    return samples
+
+
+def run_holdout_validation() -> Dict:
+    """
+    Executes the complete holdout validation pipeline:
+      1. Calibrates CRI on Dataset A.
+      2. Freezes tolerances.
+      3. Evaluates predictions on held-out Dataset B.
+      4. Computes metrics: AUROC, F1, precision, recall, FPR, Brier score, and bootstrap CIs.
+    """
+    dataset_a = build_dataset_a()
+    calibrated_tolerances = calibrate_cri_tolerances(dataset_a)
+
+    dataset_b = build_dataset_b()
+
