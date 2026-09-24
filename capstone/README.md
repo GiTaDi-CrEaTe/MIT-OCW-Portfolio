@@ -143,3 +143,33 @@ The static model's posterior variance shrinks as $O(1/N)$. Because it assumes th
 - **Artifact:** [`fig6_computational_reliability.png`](../artifacts/fig6_computational_reliability.png)
 
 #### 1. Theoretical Connections
+1. **6.042 (Discrete Exactness) $\to$ 18.06 (Continuous Breakdown):**
+   In 6.042 integer arithmetic ($\mathbb{Z}/n\mathbb{Z}$), Euler's totient theorem $(m^e)^d \equiv m \pmod n$ was verified using genuine primes $p = 1000000007$ and $q = 1000000009$ with private exponent $d = e^{-1} \pmod{\phi(n)}$, recovering $m$ with exact 0.0 reconstruction error. In float64 arithmetic, $(10^{16} + 1.0) - 10^{16} - 1.0 = 1.0$ (complete catastrophic cancellation of the unit).
+2. **18.06 (Eigenstructure) $\leftrightarrow$ 6.041 (Markov Chains):**
+   The stationary distribution of a 4-state Markov transition matrix is computed as the left eigenvector of $P$ using 18.06 matrix routines. The spectral vector matched a 200,000-step 6.041 simulation to within $0.0039$.
+3. **6.041 (MLE) + 18.06 (Matrix Calculus) $\to$ 6.036 (Neural Networks):**
+   The cross-entropy loss is the negative log-likelihood of a Bernoulli model. The combined gradient $\frac{\partial L}{\partial Z} = A - Y$ algebraically cancels the denominator $A(1-A)$, avoiding floating-point division-by-zero when activations saturate.
+
+#### 2. Original Synthesis: The Computational Reliability Index (CRI)
+We formulate a unified safety metric $\rho \in [0, 1]$ mapping empirical degradation against critical failure tolerances across all six computational domains:
+$$\rho = \frac{1}{1 + \left(\frac{\text{Error}}{\text{Error}_{\text{crit}}}\right)^2}$$
+where $\rho \to 1.0$ indicates that machine execution faithfully reflects mathematical guarantees, $\rho = 0.5$ marks the critical transition threshold, and $\rho \to 0.0$ signifies catastrophic breakdown.
+
+#### CRI Profile Across All Six Disciplines
+| Domain | Safe Implementation | Safe CRI | Failure Mode | Fail CRI |
+|---|---|---|---|---|
+| **1. QR Orthogonalization** | Modified Gram-Schmidt ($\kappa=10^8$) | **1.0000** | Classical Gram-Schmidt ($\kappa=10^8$) | **0.0006** |
+| **2. SVD Factorization** | LAPACK Direct SVD ($\kappa=10^9$) | **1.0000** | $A^TA$ Normal Equations ($\kappa=10^9$) | **0.0008** |
+| **3. Gradient Verification** | Finite Difference ($\epsilon^* = 10^{-5}$) | **1.0000** | Finite Difference ($\epsilon = 10^{-14}$) | **0.0000** |
+| **4. Bayesian Inference** | Adaptive Updating (Regime Shift) | **0.9615** | Static i.i.d. Updating (Regime Shift) | **0.0110** |
+| **5. Heuristic Search** | A\* with Lexicographic Tie-Break | **1.0000** | A\* with Inadmissible Heuristic ($1.5\times$) | **0.0000** |
+| **6. Algebraic Precision** | Discrete Modular RSA in $\mathbb{Z}/n\mathbb{Z}$ | **1.0000** | IEEE-754 float64 Bit Cancellation | **0.0000** |
+
+---
+
+### Experiment 7 --  Holdout Validation: Testing CRI Generalization
+- **Code:** [`cri_validation.py`](./cri_validation.py)
+- **Artifact:** [`fig7_cri_holdout_validation.png`](../artifacts/fig7_cri_holdout_validation.png)
+
+#### The Experiment
+To confirm that the Computational Reliability Index does not simply overfit the six calibration domains, we tested the frozen thresholds from Dataset A ($N=36$) on a completely held-out benchmark suite, Dataset B ($N=38$):
