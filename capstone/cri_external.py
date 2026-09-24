@@ -218,3 +218,23 @@ def run_external_challenge() -> Dict:
     revised_preds = np.array([r["revised_predicted_failure"] for r in records], dtype=int)
 
     naive_accuracy = float(np.mean(naive_preds == y_true))
+    revised_accuracy = float(np.mean(revised_preds == y_true))
+
+    return {
+        "solve_challenge": solve_res,
+        "cholesky_challenge": chol_res,
+        "naive_accuracy": naive_accuracy,
+        "revised_accuracy": revised_accuracy,
+    }
+
+
+if __name__ == "__main__":
+    print("=" * 86)
+    print("EXTERNAL LIBRARY CHALLENGE: TESTING CRI AGAINST SCIPY / LAPACK")
+    print("=" * 86)
+
+    res = run_external_challenge()
+    records = res["solve_challenge"]["records"]
+
+    print(f"{'n':<3} | {'kappa(A)':<9} | {'Forward Err':<12} | {'Residual Norm':<14} | {'Naive CRI':<10} | {'Revised CRI':<12} | {'True Fail?':<10} | {'Warned?':<8}")
+    print("-" * 97)
