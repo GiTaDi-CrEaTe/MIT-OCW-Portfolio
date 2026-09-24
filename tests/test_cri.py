@@ -253,3 +253,10 @@ def test_cri_negative_error_raises():
         compute_scalar_cri(-1e-5, 1.0)
     with pytest.raises(ValueError):
         compute_scalar_cri(0.5, -0.1)
+
+
+def test_cri_zero_error_yields_one():
+    # Zero error must yield exact 1.0 reliability
+    from capstone.cri import compute_scalar_cri
+    assert compute_scalar_cri(0.0, 1.0) == 1.0
+    assert compute_scalar_cri(0.0, 1e-12) == 1.0
