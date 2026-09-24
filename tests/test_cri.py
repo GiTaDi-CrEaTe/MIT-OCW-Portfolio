@@ -48,3 +48,28 @@ def test_cri_monotonicity_and_bounds():
         compute_scalar_cri(1.0, 0.0)
 
 
+def test_composite_cri_weakest_link():
+    tolerances = CriticalTolerances(
+        numerical_tol=0.01,
+        decision_tol=0.001,
+        assumption_tol=1.0,
+        stability_tol=0.5,
+    )
+
+    # All safe: rho should be near 1.0
+    safe_comp = ReliabilityComponents(
+        numerical_error=1e-5,
+        decision_error=1e-6,
+        assumption_violation=0.01,
+        stability_risk=0.01,
+    )
+    rho_safe, z_safe, dom_safe = compute_composite_cri(safe_comp, tolerances)
+    assert rho_safe > 0.99
+    assert z_safe < 0.1
+    assert not predict_failure(rho_safe)
+
+    # Single catastrophic component (weakest link):
+    # Numerical error is tiny, but decision error is 10x its threshold
+    weak_link_comp = ReliabilityComponents(
+        numerical_error=1e-6,
+        decision_error=0.01,  # 10x decision_tol
