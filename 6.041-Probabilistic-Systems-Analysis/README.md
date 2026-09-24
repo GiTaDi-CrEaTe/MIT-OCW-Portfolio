@@ -23,4 +23,4 @@ How does Bayesian inference behave when the data-generating process violates the
 - **Model Misspecification & False Certainty:** When observing non-stationary coin flips driven by a regime-switching Markov chain, the static i.i.d. Bayesian model accumulated false certainty, narrowing its credible interval around an unrepresentative average and yielding an empirical coverage of only **4.2%**! (Investigated thoroughly in [Capstone Experiment 5](../capstone/README.md#experiment-5--probability-under-model-misspecification)).
 
 ### Capstone & Cross-Course Connection
-The stationary distribution $\pi P = \pi$ is an eigenvector problem that directly reuses 18.06 eigensolvers. Furthermore, Bernoulli negative log-likelihood minimization here is identical to the binary cross-entropy loss function used to train 6.036 neural networks.
+The stationary distribution $\pi P = \pi$ is an eigenvector problem that directly reuses 18.06 eigensolvers. At the same time, Bernoulli negative log-likelihood minimization here is identical to the binary cross-entropy loss function used to train 6.036 neural networks.
