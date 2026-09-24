@@ -54,3 +54,17 @@ On the same Hilbert matrix:
 - CGS orthogonality error: 3.01
 - MGS orthogonality error: $1.38 \times 10^{-3}$
 
+This pattern -- a sharp transition from reliable to catastrophic computation -- appears in every domain I studied: linear algebra, search, gradient computation, Bayesian inference, and discrete arithmetic.
+
+The Computational Reliability Index (CRI) attempts to characterize this transition boundary across all six domains. Whether it succeeds is tested in the holdout validation (`capstone/cri_validation.py`).
+
+## Reproduce It
+
+```bash
+python3 capstone/numerical_stability.py
+python3 capstone/run_experiments.py
+pytest -v
+```
+
+---
+*Independent study by Adityajyoti Kar (GiTaDi-CrEaTe). Based on publicly available MIT OpenCourseWare materials. Not affiliated with or endorsed by MIT.*
