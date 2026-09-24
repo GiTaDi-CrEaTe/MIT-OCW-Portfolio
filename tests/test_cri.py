@@ -161,6 +161,7 @@ def test_external_library_challenge():
 
     # The revised stability-aware CRI accurately flags failure
     assert ext_res["revised_accuracy"] >= 0.90
+    assert ext_res["revised_accuracy"] > ext_res["naive_accuracy"] + 0.20
 
     # Check Cholesky breakdown on high-order Hilbert matrix
     chol_records = ext_res["cholesky_challenge"]["records"]
