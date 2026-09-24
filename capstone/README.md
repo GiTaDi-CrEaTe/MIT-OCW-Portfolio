@@ -198,7 +198,7 @@ To confirm that the Computational Reliability Index does not simply overfit the 
 We tested whether CRI could predict failures in production routines that I did not build: `scipy.linalg.solve` and `scipy.linalg.cholesky` on ill-conditioned Hilbert matrices ($n = 4 \dots 15$).
 
 #### Key Finding
-At $n = 13$ ($\kappa \approx 2.0 \times 10^{18}$), `scipy.linalg.solve` returned a solution with $1580\%$ forward error while reporting a backward residual norm of $3.59 \times 10^{-16}$. The library did not raise an exception, though it emitted a `LinAlgWarning` at $n \ge 12$. A naive residual-based check predicted that all solutions were safe, achieving only 58.3% accuracy.
+At $n = 13$ ($\kappa \approx 2.0 \times 10^{18}$), `scipy.linalg.solve` returned a solution with $1580\%$ forward error while reporting a backward residual norm of $3.59 \times 10^{-16}$. The library did not raise an exception, though it emitted a `LinAlgWarning` at $n \ge 12$. A naive residual-based check predicted that all solutions were safe, achieving only 58.3%--66.7% accuracy across environments.
 
 By incorporating condition-based stability risk ($r_{\text{stab}} = \min(1.0, \kappa(A) \epsilon_{\text{mach}})$), the revised CRI flagged failure ($\rho < 0.5$) starting at $n=11$, achieving 100.0% accuracy in detecting forward corruption.
 
