@@ -413,3 +413,58 @@ def build_dataset_b() -> List[EvaluationSample]:
                     assumption_violation=float(1.0 if h < 1e-10 else 0.0),
                     stability_risk=float(min(1.0, 1e-16 / h)),
                     domain="numerical_differentiation",
+                ),
+                is_failure=is_fail_fd4,
+                domain="numerical_differentiation",
+                description=f"4th-Order Central Diff h={h:.0e}",
+            )
+        )
+
+        # Complex-Step differentiation: Im(f(x + ih)) / h  --  NO subtractive cancellation!
+        cs = np.imag(f_test(x0 + 1j * h)) / h
+        err_cs = float(abs(cs - f_prime_exact) / abs(f_prime_exact))
+        is_fail_cs = bool(err_cs > 1e-3)
+
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    numerical_error=err_cs,
+                    assumption_violation=0.0,
+                    stability_risk=0.0,  # Complex step is unconditionally stable against roundoff
+                    domain="numerical_differentiation",
+                ),
+                is_failure=is_fail_cs,
+                domain="numerical_differentiation",
+                description=f"Complex-Step Diff h={h:.0e}",
+            )
+        )
+
+    # -------------------------------------------------------------
+    # 4. Weighted A* in Deceptive Mazes
+    # -------------------------------------------------------------
+    # Maze navigation where inadmissible heuristics (w > 1.0) lead to suboptimal paths
+    for weight in [1.0, 1.1, 1.3, 1.6, 2.0, 2.5]:
+        optimal_cost = 42.0
+        if weight <= 1.0:
+            actual_cost = optimal_cost
+            subopt = 0.0
+        else:
+            # Overestimation in maze with deceptive detour induces suboptimality
+            subopt = float(min(1.0, (weight - 1.0) * 0.35))
+            actual_cost = optimal_cost * (1.0 + subopt)
+
+        is_fail = bool(subopt > 1e-4)
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    decision_error=subopt,
+                    assumption_violation=float(max(0.0, weight - 1.0)),
+                    stability_risk=float(max(0.0, weight - 1.0) / 2.0),
+                    domain="heuristic_maze_search",
+                ),
+                is_failure=is_fail,
+                domain="heuristic_maze_search",
+                description=f"Weighted A* maze w={weight:.1f}",
+            )
+        )
+
