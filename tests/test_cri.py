@@ -173,3 +173,28 @@ def test_auroc_ties_and_edge_cases():
     # Completely tied scores must yield 0.5 (random guess)
     y_true_tied = np.array([0, 1])
     y_scores_tied = np.array([0.5, 0.5])
+    assert compute_auroc(y_true_tied, y_scores_tied) == 0.5
+
+    # Partial ties with known exact mid-rank value: 7/8 = 0.875
+    y_true_part = np.array([0, 0, 1, 1])
+    y_scores_part = np.array([0.2, 0.5, 0.5, 0.8])
+    assert compute_auroc(y_true_part, y_scores_part) == 0.875
+
+    # Single-class edge cases must return 0.5 safely
+    assert compute_auroc(np.array([0, 0, 0]), np.array([0.1, 0.2, 0.3])) == 0.5
+    assert compute_auroc(np.array([1, 1, 1]), np.array([0.1, 0.2, 0.3])) == 0.5
+
+    # Inverted ranking must yield 0.0
+    y_true_inv = np.array([0, 0, 1, 1])
+    y_scores_inv = np.array([0.9, 0.8, 0.2, 0.1])
+    assert compute_auroc(y_true_inv, y_scores_inv) == 0.0
+
+
+def test_composite_cri_robustness_and_bounds():
+    tolerances = CriticalTolerances(1e-2, 1e-3, 1.0, 0.5)
+
+    # All zero inputs
+    zero_comp = ReliabilityComponents(0.0, 0.0, 0.0, 0.0)
+    rho_z, z_z, _ = compute_composite_cri(zero_comp, tolerances)
+    assert rho_z == 1.0
+    assert z_z == 0.0
