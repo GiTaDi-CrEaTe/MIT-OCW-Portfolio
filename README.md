@@ -68,3 +68,63 @@ Instead of building disconnected projects, I keep coming back to the same theme:
 This isn't six isolated projects. Each course builds on the ones before it:
 
 ```
+6.042 (Discrete Proofs & Invariants)   --> Exact integer rings, induction, invariant maintenance
+ |
+ v
+18.06 (Continuous Linear Algebra)    --> Vector spaces, decompositions, condition number limits
+ |
+ v
+6.006 (Algorithms & Data Structures)   --> Rebalancing invariants (AVL), graph traversal
+ |
+ v
+6.041 (Probability & Inference)    --> Stochastic processes, Markov eigen-dynamics, Bayesian limits
+ |
+ v
+6.036 (Machine Learning)      --> 18.06 Jacobians + 6.041 MLE loss -> hand-derived backprop
+ |
+ v
+6.034 (Artificial Intelligence)    --> 6.006 graphs + 6.042 invariants -> heuristic A* & CSPs
+```
+
+---
+
+## Repository Map
+
+```
+MIT-OCW-Portfolio/
+|
+|-- 6.042-Mathematics-for-Computer-Science/
+| |-- Applied-Theory/number_theory_cryptography.py
+| +-- README.md
+|
+|-- 18.06-Linear-Algebra/
+| |-- Applied-Theory/linear_algebra_from_scratch.py
+| +-- README.md
+|
+|-- 6.006-Introduction-to-Algorithms/
+| |-- Applied-Theory/graph_algorithms_and_data_structures.py
+| +-- README.md
+|
+|-- 6.034-Artificial-Intelligence/
+| |-- Applied-Theory/search_and_csp.py
+| +-- README.md
+|
+|-- 6.036-Introduction-to-Machine-Learning/
+| |-- Applied-Theory/neural_network_from_scratch.py
+| +-- README.md
+|
+|-- 6.041-Probabilistic-Systems-Analysis/
+| |-- Applied-Theory/bayesian_inference_and_markov_chains.py
+| +-- README.md
+|
+|-- capstone/        # Cross-course experiments with reproducible figures
+| |-- run_experiments.py     # Runs all 8 experiments and regenerates artifacts
+| |-- numerical_stability.py   # Gram-Schmidt breakdown study
+| |-- svd_investigation.py   # Condition number squaring trap
+| |-- search_efficiency.py   # A* heuristic scaling study
+| |-- gradient_precision.py    # Finite-difference U-curve
+| |-- model_misspecification.py  # Bayesian overconfidence under drift
+| |-- cross_course_synthesis.py  # How the six courses connect
+| |-- cri.py                 # Mathematical formulation of multi-axis CRI
+| |-- cri_validation.py      # Holdout validation (Dataset A vs Dataset B)
+| |-- cri_external.py        # External library challenge (SciPy/LAPACK)
