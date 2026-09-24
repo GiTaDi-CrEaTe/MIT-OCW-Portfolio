@@ -148,3 +148,103 @@ def plot_fig4_gradient(grad_res: dict, artifacts_dir: Path):
     out_path = artifacts_dir / "fig4_gradient_finite_difference_u_curve.png"
     plt.savefig(out_path, dpi=300)
     plt.close()
+    print(f"  [Artifact] Saved: {out_path}")
+
+
+def plot_fig5_misspecification(artifacts_dir: Path):
+    obs, true_thetas = generate_regime_switching_stream(n_steps=400, seed=42)
+    m_means, m_stds, m_low, m_high = run_bayesian_iid_updating(obs)
+    a_means, a_stds, a_low, a_high = run_bayesian_adaptive_updating(obs, discount_factor=0.95)
+
+    steps = np.arange(len(obs))
+    plt.figure(figsize=(10, 5))
+    plt.plot(steps, true_thetas, "k--", label=r"True Instantaneous Parameter $\theta_t$", linewidth=2)
+    plt.plot(steps, m_means, "r-", label="Misspecified i.i.d. Posterior Mean", linewidth=1.5)
+    plt.fill_between(steps, m_low, m_high, color="red", alpha=0.15, label="Misspecified 95% Credible Interval")
+    plt.plot(steps, a_means, "b-", label="Adaptive (Regime-Aware) Mean", linewidth=1.5)
+    plt.fill_between(steps, a_low, a_high, color="blue", alpha=0.15, label="Adaptive 95% Credible Interval")
+
+    plt.xlabel("Time Step $t$", fontsize=11)
+    plt.ylabel(r"Parameter Value $\theta$", fontsize=11)
+    plt.title("Figure 5: Model Misspecification  --  False Certainty in Static Bayesian Models", fontsize=12, fontweight="bold")
+    plt.ylim(-0.05, 1.05)
+    plt.grid(True, ls=":", alpha=0.6)
+    plt.legend(loc="lower left", fontsize=9)
+    plt.tight_layout()
+    out_path = artifacts_dir / "fig5_model_misspecification.png"
+    plt.savefig(out_path, dpi=300)
+    plt.close()
+    print(f"  [Artifact] Saved: {out_path}")
+
+
+def plot_fig6_computational_reliability(cri_data: dict, artifacts_dir: Path):
+    domains = list(cri_data.keys())
+    safe_vals = [cri_data[d]["safe_cri"] for d in domains]
+    fail_vals = [cri_data[d]["fail_cri"] for d in domains]
+
+    short_labels = [
+        "QR\nOrthogonality",
+        "SVD\nConditioning",
+        "Gradient\nVerification",
+        "Bayesian\nInference",
+        "A* Heuristic\nSearch",
+        "Algebraic\nExactness",
+    ]
+
+    plt.figure(figsize=(10, 5.5))
+    x = np.arange(len(domains))
+    width = 0.35
+
+    plt.bar(x - width/2, safe_vals, width, label="Controlled / Robust Formulation (Safe)", color="#2ca02c", edgecolor="black", alpha=0.85)
+    plt.bar(x + width/2, fail_vals, width, label="Naive / Uncalibrated Implementation (Failure)", color="#d62728", edgecolor="black", alpha=0.85)
+
+    plt.axhline(0.5, color="purple", linestyle="--", linewidth=1.5, label=r"Transition Threshold ($\rho = 0.5$)")
+    plt.ylabel(r"Computational Reliability Index $\rho \in [0, 1]$", fontsize=11)
+    plt.title("Figure 6: The Computational Reliability Index (CRI) Spectrum across Six Domains", fontsize=12, fontweight="bold")
+    plt.xticks(x, short_labels, fontsize=10)
+    plt.ylim(0.0, 1.15)
+    plt.grid(True, axis="y", ls=":", alpha=0.6)
+    plt.legend(loc="upper right", fontsize=9)
+    plt.tight_layout()
+    out_path = artifacts_dir / "fig6_computational_reliability.png"
+    plt.savefig(out_path, dpi=300)
+    plt.close()
+    print(f"  [Artifact] Saved: {out_path}")
+
+
+def plot_fig7_cri_holdout(val_res: dict, artifacts_dir: Path):
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    y_true = val_res["y_true"]
+    y_scores = val_res["y_scores"]
+
+    thresholds = np.linspace(0.0, 1.0, 101)
+    tprs = []
+    fprs = []
+    for t in thresholds:
+        pred = (y_scores >= t).astype(int)
+        tp = np.sum((y_true == 1) & (pred == 1))
+        fp = np.sum((y_true == 0) & (pred == 1))
+        fn = np.sum((y_true == 1) & (pred == 0))
+        tn = np.sum((y_true == 0) & (pred == 0))
+        tprs.append(tp / (tp + fn) if (tp + fn) > 0 else 0)
+        fprs.append(fp / (fp + tn) if (fp + tn) > 0 else 0)
+
+    m = val_res["metrics"]
+    ci = val_res["bootstrap_ci"]
+    ax1.plot(fprs, tprs, "b-", lw=2, label=f"CRI ROC (AUROC = {m['auroc']:.3f})")
+    ax1.plot([0, 1], [0, 1], "k--", alpha=0.5, label="Chance (AUC = 0.500)")
+    ax1.plot(m["fpr"], m["recall"], "r*", markersize=12, label=r"Operating Point ($\rho=0.5$)")
+    ax1.set_xlabel("False Positive Rate (FPR)", fontsize=11)
+    ax1.set_ylabel("True Positive Rate (Recall)", fontsize=11)
+    ax1.set_title("(a) ROC Curve on Held-Out Dataset B", fontsize=12, fontweight="bold")
+    ax1.grid(True, ls=":", alpha=0.6)
+    ax1.legend(loc="lower right", fontsize=9)
+
+    # Calibration diagram on right
+    bins = np.linspace(0.0, 1.0, 6)
+    emp_probs = []
+    pred_probs = []
+    for i in range(len(bins) - 1):
+        mask = (y_scores >= bins[i]) & (y_scores < bins[i + 1])
+        if np.sum(mask) > 0:
+            pred_probs.append(float(np.mean(y_scores[mask])))
