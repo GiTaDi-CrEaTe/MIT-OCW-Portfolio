@@ -260,3 +260,10 @@ def test_cri_zero_error_yields_one():
     from capstone.cri import compute_scalar_cri
     assert compute_scalar_cri(0.0, 1.0) == 1.0
     assert compute_scalar_cri(0.0, 1e-12) == 1.0
+
+
+def test_stability_risk_saturation():
+    # Extremely ill-conditioned matrices must saturate risk to 1.0
+    from capstone.cri_external import compute_stability_risk
+    assert compute_stability_risk(1e20) == 1.0
+    assert compute_stability_risk(1e30) == 1.0
