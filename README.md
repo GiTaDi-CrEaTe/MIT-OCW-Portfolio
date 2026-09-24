@@ -188,3 +188,43 @@ I'm listing these up front because I think knowing what went wrong matters as mu
 
 ---
 
+## What I Learned
+
+The biggest lesson wasn't about any single algorithm. It was that mathematical correctness and computational correctness are different things, and the gap between them is where most real engineering problems live. A proof says Gram-Schmidt works. It does work, in exact arithmetic. But IEEE 754 isn't exact arithmetic, and understanding why it fails (catastrophic cancellation in the projection step) is what lets you pick Modified GS or Householder reflections instead.
+
+The second thing that stuck with me: small backward error does not imply a correct answer. My CGS code produced $\|A - QR\| \approx 10^{-17}$ while the Q matrix was completely non-orthogonal. If I had only checked the residual, I would have shipped broken code with confidence.
+
+---
+
+## Open Questions
+
+Some things I ran into that I still don't have clean answers for:
+
+- **Why does MGS work better than CGS when they're mathematically identical?** I can explain the mechanism (sequential vs. original projections, catastrophic cancellation), but I don't have a tight error bound of the form $\|Q^TQ - I\| \le f(\kappa, \epsilon_{\text{mach}})$ for MGS that I've derived myself. The literature says $O(\kappa \cdot \epsilon_{\text{mach}})$ for MGS vs. $O(\kappa^2 \cdot \epsilon_{\text{mach}})$ for CGS, but I haven't worked through the proof.
+- **Is there a principled way to pick the discount factor $\gamma$ in the adaptive Bayesian model?** I tuned it by hand. There should be a way to learn the switching rate from the data itself (maybe a hidden Markov model), but that's a much harder inference problem.
+- **Why do f-cost plateaus form on uniform grids, and how does lexicographic tie-breaking resolve them?** On an empty grid, $f(n) = g(n) + h(n) = (x+y) + (W-1-x + H-1-y) = W + H - 2$ is strictly constant across the entire rectangular bounding box. Pure A* wanders arbitrarily across this flat manifold. True lexicographic tie-breaking resolves equal-$f$ states by minimizing remaining $h$ without inflating the heuristic, preserving admissibility while driving expansions along the diagonal.
+
+---
+
+## What's Next
+
+There are parts of these courses I haven't implemented yet, and there are natural extensions:
+
+- **Dynamic programming** (6.006 Psets 11-12): knapsack, edit distance, shortest paths as DP
+- **Householder QR** (18.06): the algorithm that production solvers actually use, and why it doesn't care about condition numbers
+- **MCMC sampling** (6.041): extending beyond conjugate priors to handle real posterior distributions
+- **Convolutional layers** (6.036): adding structure to the from-scratch network
+- **MCTS** (6.034): the search algorithm that actually works for large game trees (Go, Chess)
+- **Shifted QR with Wilkinson shifts** (18.06): why the unshifted QR eigensolver is slow on clustered eigenvalues
+
+I'm also interested in combining the Markov chain work from 6.041 with the neural network from 6.036 to build a simple reinforcement learning agent, which would connect all six courses into one system.
+
+---
+
+## Resources Used
+
+- **Lectures and problem sets:** MIT OpenCourseWare (ocw.mit.edu) for all six courses
+- **Primary textbooks:** Strang's *Introduction to Linear Algebra* (18.06), CLRS *Introduction to Algorithms* (6.006), Bertsekas & Tsitsiklis *Introduction to Probability* (6.041)
+- **Numerical analysis reference:** Trefethen & Bau, *Numerical Linear Algebra*, for understanding why CGS fails and Householder doesn't
+- **Implementation:** Python 3.11+, NumPy (for array operations only, not for `numpy.linalg` solvers), Matplotlib (for figures), pytest (for testing)
+
