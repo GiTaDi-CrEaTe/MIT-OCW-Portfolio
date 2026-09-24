@@ -32,3 +32,15 @@ This timeline documents the chronological development of the Foundations Lab pro
 ## Phase 5: Validation and Falsification Attempt (Month 8)
 - Built holdout validation for CRI
 - Tested CRI against an external system (scipy) that I did not build
+- Documented what worked and what failed in the findings
+- Wrote the research report
+
+## What the Commit History Shows
+
+The git commit history for this repository shows initial architecture setup in late August 2026, and all implementation commits (spanning the course domains, capstone experiments, and documentation) in September 2026, culminating in the holdout validation on September 24. 
+
+These commits capture the implementation milestones, not the full study timeline. The intellectual work -- watching lectures, solving problem sets, and working through hand derivations -- happened over the eight months prior. The git log represents when the code was finalized and committed to the repository, not when the learning happened.
+
+***
+
+*Independent study based on publicly available MIT OpenCourseWare materials. Not affiliated with or endorsed by MIT.*
