@@ -73,3 +73,15 @@ Each review is documented as:
 ## External Replication & How to Attack This Work
 
 I welcome independent researchers, professors, and software engineers to stress-test this repository and attempt to falsify these findings:
+
+1. **Replication Commands**:
+   - Run the full test suite: `pytest -v` (55 passing tests).
+   - Re-generate all experimental figures: `python3 capstone/run_experiments.py`.
+2. **Specific Attack Vectors**:
+   - Sparse indefinite linear systems (e.g. saddle-point KKT matrices) where pivoting failure can occur despite moderate condition numbers.
+   - Non-smooth objective functions with subgradient discontinuities in finite-difference gradient checks.
+   - GPU-accelerated or multi-threaded linear algebra backends (e.g. cuSOLVER, OpenBLAS) under aggressive compiler vectorization.
+3. **Submitting Critiques**:
+   - Open a GitHub issue titled `[Critique] <Brief summary of flaw>`.
+   - Provide minimal reproducible Python code and numerical counterexamples.
+   - Verified critiques with empirical counterexamples will be incorporated directly into this log with attribution.
