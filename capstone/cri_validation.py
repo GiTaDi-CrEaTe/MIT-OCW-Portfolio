@@ -88,3 +88,43 @@ def build_dataset_a() -> List[EvaluationSample]:
                 domain="linear_algebra_qr",
                 description=f"MGS at kappa={kappa:.0e}",
             )
+        )
+
+    # 2. SVD Factorization: Normal Equations A^T A vs Direct SVD
+    for kappa in [1e2, 1e4, 1e6, 1e8, 1e10]:
+        # A^T A squares condition number; fails when kappa^2 * eps >= 1
+        ata_rel_err = float(min(5.0, 1e-16 * (kappa ** 2)))
+        ata_fail = bool(ata_rel_err > 0.10)
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    numerical_error=ata_rel_err,
+                    assumption_violation=float((kappa ** 2) / 1e16),
+                    stability_risk=float(min(1.0, (kappa ** 2) / 1e16)),
+                    domain="svd_factorization",
+                ),
+                is_failure=ata_fail,
+                domain="svd_factorization",
+                description=f"Normal SVD at kappa={kappa:.0e}",
+            )
+        )
+
+        direct_rel_err = float(1e-16 * kappa)
+        direct_fail = bool(direct_rel_err > 0.10)
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    numerical_error=direct_rel_err,
+                    assumption_violation=float(kappa / 1e16),
+                    stability_risk=float(min(1.0, kappa / 1e16)),
+                    domain="svd_factorization",
+                ),
+                is_failure=direct_fail,
+                domain="svd_factorization",
+                description=f"Direct SVD at kappa={kappa:.0e}",
+            )
+        )
+
+    # 3. Machine Learning: Gradient Precision
+    # Central difference precision sweep: U-curve
+    for eps in [1e-15, 1e-12, 1e-8, 1e-5, 1e-2]:
