@@ -173,3 +173,48 @@ def build_dataset_a() -> List[EvaluationSample]:
             is_failure=False,
             domain="bayesian_inference",
             description="Adaptive Bayes under regime drift",
+        )
+    )
+    samples.append(
+        EvaluationSample(
+            components=ReliabilityComponents(
+                numerical_error=0.85,
+                decision_error=0.60,
+                assumption_violation=2.5,
+                stability_risk=0.90,
+                domain="bayesian_inference",
+            ),
+            is_failure=True,
+            domain="bayesian_inference",
+            description="Static Bayes under regime drift",
+        )
+    )
+
+    # 5. Artificial Intelligence: A* Search
+    # Admissible heuristics vs inflated heuristics
+    for weight in [1.0, 1.2, 1.5, 2.0]:
+        subopt = float(0.0 if weight <= 1.0 else (weight - 1.0) * 0.4)
+        is_subopt = bool(subopt > 1e-4)
+        samples.append(
+            EvaluationSample(
+                components=ReliabilityComponents(
+                    decision_error=subopt,
+                    assumption_violation=float(max(0.0, weight - 1.0)),
+                    stability_risk=float(max(0.0, weight - 1.0) / 2.0),
+                    domain="heuristic_search",
+                ),
+                is_failure=is_subopt,
+                domain="heuristic_search",
+                description=f"A* heuristic weight={weight:.1f}",
+            )
+        )
+
+    # 6. Discrete Mathematics: Arithmetic exactness vs float cancellation
+    samples.append(
+        EvaluationSample(
+            components=ReliabilityComponents(
+                numerical_error=0.0,
+                assumption_violation=0.0,
+                stability_risk=0.0,
+                domain="discrete_arithmetic",
+            ),
