@@ -543,3 +543,33 @@ def run_holdout_validation() -> Dict:
 
     dataset_b = build_dataset_b()
 
+    # Collect predictions on Dataset B
+    y_true_b = []
+    y_scores_b = []
+    rhos_b = []
+    dominant_modes_b = []
+
+    for sample in dataset_b:
+        rho, z, dom_mode = compute_composite_cri(
+            sample.components,
+            calibrated_tolerances,
+            aggregation="weakest_link",
+        )
+        # Risk score is probability of failure: 1 - rho
+        risk_score = 1.0 - rho
+
+        y_true_b.append(1 if sample.is_failure else 0)
+        y_scores_b.append(risk_score)
+        rhos_b.append(rho)
+        dominant_modes_b.append(dom_mode)
+
+    y_true_arr = np.array(y_true_b, dtype=int)
+    y_scores_arr = np.array(y_scores_b, dtype=np.float64)
+
+    metrics = compute_classification_metrics(y_true_arr, y_scores_arr, threshold=0.5)
+    ci_results = bootstrap_ci(y_true_arr, y_scores_arr, n_bootstraps=1000, seed=42)
+
+    return {
+        "calibrated_tolerances": calibrated_tolerances,
+        "dataset_a_count": len(dataset_a),
+        "dataset_b_count": len(dataset_b),
