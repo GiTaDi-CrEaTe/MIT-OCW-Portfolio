@@ -73,3 +73,30 @@ class CriticalTolerances:
     """
     numerical_tol: float = 1e-2
     decision_tol: float = 1e-3
+    assumption_tol: float = 1.0
+    stability_tol: float = 0.5
+
+
+@dataclass
+class EvaluationSample:
+    """
+    A single experiment instance with measured state and empirical binary failure label.
+    """
+    components: ReliabilityComponents
+    is_failure: bool
+    domain: str
+    description: str
+
+
+def compute_scalar_cri(error: float, crit_threshold: float) -> float:
+    """
+    Single-variable CRI computation for backward compatibility.
+    rho = 1 / (1 + (error / crit_threshold)^2)
+    """
+    if crit_threshold <= 0:
+        raise ValueError("Critical threshold must be strictly positive.")
+    ratio = max(0.0, float(error)) / float(crit_threshold)
+    return float(1.0 / (1.0 + ratio ** 2))
+
+
+def compute_composite_cri(
