@@ -6,7 +6,7 @@ Research Question:
   How do the mathematical foundations across all six courses interact when built
   into a unified computational pipeline, and can a single metric predict computational breakdown?
 
-The Conceptual Spine:
+How the courses connect:
   1. Discrete Precision vs Continuous Approximations (6.042 -> 18.06):
      In 6.042 number theory (modular arithmetic in Z/nZ), algebraic identities
      (e.g., m^(ed) = m mod n under Euler's totient theorem) hold with exactness across
