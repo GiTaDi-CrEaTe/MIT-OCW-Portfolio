@@ -43,7 +43,7 @@
 - **The Fix:**
   1. Identified that this is an unavoidable structural limitation of any algorithm that forms the normal equations.
   2. Clamped negative eigenvalues from numerical noise (`np.maximum(eigvals, 0.0)`).
-  3. Added the condition number squaring demonstration to the capstone, documenting why direct bidiagonalization (Golub-Kahan) is mandatory for $\kappa(A) \ge 10^8$.
+  3. Added the condition number squaring experiment to the capstone, documenting why direct bidiagonalization (Golub-Kahan) is mandatory for $\kappa(A) \ge 10^8$.
 
 ---
 
