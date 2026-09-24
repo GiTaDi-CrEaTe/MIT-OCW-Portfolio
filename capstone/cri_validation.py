@@ -27,7 +27,7 @@ Validation Protocol:
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 import numpy as np
 
 # Ensure project root is in sys.path
@@ -530,7 +530,7 @@ def build_dataset_b() -> List[EvaluationSample]:
     return samples
 
 
-def run_holdout_validation() -> Dict:
+def run_holdout_validation() -> Dict[str, Any]:
     """
     Executes the complete holdout validation pipeline:
       1. Calibrates CRI on Dataset A.
