@@ -163,3 +163,33 @@ def run_scipy_cholesky_challenge(n_range: Tuple[int, int] = (4, 15)) -> Dict:
         exception_raised = False
         exception_type = "None"
         recon_err = 0.0
+        solve_err = 0.0
+
+        try:
+            with warnings.catch_warnings(record=True) as caught_warnings:
+                warnings.simplefilter("always")
+                L = scipy.linalg.cholesky(H, lower=True)
+                if len(caught_warnings) > 0:
+                    warning_raised = True
+                    warning_type = caught_warnings[-1].category.__name__
+                    warning_msg = str(caught_warnings[-1].message)
+
+            cholesky_succeeded = True
+            recon_err = float(np.linalg.norm(H - L @ L.T) / np.linalg.norm(H))
+
+            # Solve system via triangular factors
+            y = scipy.linalg.solve_triangular(L, b, lower=True)
+            x_chol = scipy.linalg.solve_triangular(L.T, y, lower=False)
+            solve_err = float(np.linalg.norm(x_chol - x_true) / np.linalg.norm(x_true))
+        except Exception as e:
+            exception_raised = True
+            exception_type = type(e).__name__
+            recon_err = 1.0
+            solve_err = 1.0
+
+        records.append({
+            "n": n,
+            "cond": cond,
+            "cholesky_succeeded": cholesky_succeeded,
+            "warning_raised": warning_raised,
+            "warning_type": warning_type,
