@@ -85,3 +85,6 @@ I welcome independent researchers, professors, and software engineers to stress-
    - Open a GitHub issue titled `[Critique] <Brief summary of flaw>`.
    - Provide minimal reproducible Python code and numerical counterexamples.
    - Verified critiques with empirical counterexamples will be incorporated directly into this log with attribution.
+
+### Platform Matrix Verification
+All 58 unit tests are tested across Python 3.11, 3.12, and 3.13 under GitHub Actions CI to ensure numerical stability across BLAS and LAPACK implementations.
