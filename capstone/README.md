@@ -173,3 +173,33 @@ where $\rho \to 1.0$ indicates that machine execution faithfully reflects mathem
 
 #### The Experiment
 To confirm that the Computational Reliability Index does not simply overfit the six calibration domains, we tested the frozen thresholds from Dataset A ($N=36$) on a completely held-out benchmark suite, Dataset B ($N=38$):
+- Cholesky decomposition on ill-conditioned SPD matrices ($\kappa \in [10^2, 10^{16}]$) and indefinite systems.
+- Householder orthogonal reflections on Vandermonde matrices.
+- 4th-order central finite differences vs complex-step derivative approximations.
+- Weighted A* search on maze labyrinths with deceptive local traps.
+- Unpivoted Gaussian elimination vs partial pivoting on small-pivot systems.
+- Non-stationary Markov chain tracking under sudden transition probability shocks.
+
+#### Quantitative Results
+- **AUROC:** 0.9494 (95% Bootstrap CI: [0.8472, 1.0000])
+- **F1 Score:** 0.8966 (95% Bootstrap CI: [0.7500, 1.0000])
+- **Precision:** 0.8667
+- **Recall:** 0.9286
+- **False-Positive Rate:** 0.0833
+- **Brier Score:** 0.0666
+
+---
+
+### Experiment 8 --  External Library Challenge: SciPy and LAPACK Solvers
+- **Code:** [`cri_external.py`](./cri_external.py)
+- **Artifact:** [`fig8_cri_external_validation.png`](../artifacts/fig8_cri_external_validation.png)
+
+#### The Experiment
+We tested whether CRI could predict failures in production routines that I did not build: `scipy.linalg.solve` and `scipy.linalg.cholesky` on ill-conditioned Hilbert matrices ($n = 4 \dots 15$).
+
+#### Key Finding
+At $n = 13$ ($\kappa \approx 2.0 \times 10^{18}$), `scipy.linalg.solve` returned a solution with $1580\%$ forward error while reporting a backward residual norm of $3.59 \times 10^{-16}$. The library did not raise an exception, though it emitted a `LinAlgWarning` at $n \ge 12$. A naive residual-based check predicted that all solutions were safe, achieving only 58.3% accuracy.
+
+By incorporating condition-based stability risk ($r_{\text{stab}} = \min(1.0, \kappa(A) \epsilon_{\text{mach}})$), the revised CRI flagged failure ($\rho < 0.5$) starting at $n=11$, achieving 100.0% accuracy in detecting forward corruption.
+
+---
